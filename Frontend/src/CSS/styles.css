@@ -1,0 +1,55 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+header {
+  background-color: #282c34;
+  padding: 1rem;
+  color: white;
+}
+
+header h1 {
+  margin: 0;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+}
+
+footer {
+  background-color: #282c34;
+  padding: 1rem;
+  color: white;
+  text-align: center;
+}
+
+.dashboard {
+  display: flex;
+}
+
+aside {
+  width: 200px;
+  padding: 1rem;
+  background-color: #f4f4f4;
+}
+
+aside nav {
+  display: flex;
+  flex-direction: column;
+}
+
+aside nav a {
+  margin-bottom: 1rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

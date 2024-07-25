@@ -59,6 +59,7 @@ def spotify_callback():
     session.clear()
     
     default_profile_image = 'https://www.scdn.co/i/_global/twitter_card-default.jpg'
+    
     images = user_profile.get('images', [])
     profile_image = images[0].get('url', default_profile_image) if images else default_profile_image
 

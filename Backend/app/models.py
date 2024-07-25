@@ -15,6 +15,9 @@ class User(db.Model, UserMixin, SerializerMixin):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=True)
+    display_name = db.Column(db.String(80))
+    bio = db.Column(db.Text)
+    profile_image = db.Column(db.String(200))
 
     @property
     def is_active(self):

@@ -1,13 +1,22 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, make_response, current_app, send_from_directory
 from flask_login import login_required, current_user, login_user, logout_user
 from .spotify import get_spotify_data
 from .models import db, Song, User, SpotifyAccount
 from datetime import datetime
 from flask_cors import cross_origin
 from flask_bcrypt import Bcrypt, check_password_hash
+from werkzeug.utils import secure_filename
+import os
+import logging
 
 bcrypt = Bcrypt()
 main_bp = Blueprint('main', __name__)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Spotify-related routes
 @main_bp.route('/spotify-data')
@@ -147,6 +156,10 @@ def logout():
 @main_bp.route('/user', methods=['GET'])
 @login_required
 def get_user():
+    if current_user.is_anonymous:
+        return make_response(jsonify({"message": "no user logged in"}), 401)
+    
+    
     user = current_user
     spotifyaccount = SpotifyAccount.query.filter_by(user_id=user.id).first()
 
@@ -154,6 +167,9 @@ def get_user():
         'id': user.id,
         'username': user.username,
         'email': user.email,
+        "display_name": user.display_name,
+        "bio": user.bio,
+        "profile_image": user.profile_image,
         'spotify_user_id': spotifyaccount.spotify_user_id if spotifyaccount else None,
         'spotify_profile_image': spotifyaccount.spotify_profile_image if spotifyaccount else None,
         'spotify_country': spotifyaccount.spotify_country if spotifyaccount else None,
@@ -167,14 +183,77 @@ def get_user():
     return jsonify(user_data)
 
 
-@main_bp.route('/user/<int:id>', methods=['GET'])
+@main_bp.route('/user-profile/<int:user_id>')
 @login_required
-def get_user_by_id(id):
-    user = User.query.get(id)
-    if user:
-        return jsonify(user.to_dict()), 200
-    else:
+def get_user_profile(user_id):
+    user = User.query.get(user_id)
+    if not user:
         return jsonify({"error": "User not found"}), 404
+    
+    user_data = {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'display_name': user.display_name,
+        'bio': user.bio,
+        'profile_image': user.profile_image
+    }
+    
+    return jsonify(user_data)
+
+    
+    
+@main_bp.route('/edit-profile', methods=['POST'])
+@login_required
+def edit_profile():
+    data = request.form
+    display_name = data.get('display_name')
+    bio = data.get('bio')
+    file = request.files.get('file')
+
+    if display_name:
+        current_user.display_name = display_name
+
+    if bio:
+        current_user.bio = bio
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        current_user.profile_image = filename
+    else:
+        logging.error(f"File upload failed or file type not allowed: {file.filename}")
+
+    db.session.commit()
+
+    return jsonify({"message": "Profile updated successfully!"}), 200
+
+@main_bp.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+
+@main_bp.route('/search-users')
+@login_required
+def search_users():
+    query = request.args.get('query', '')
+    if not query:
+        return jsonify([]), 200
+
+    users = User.query.filter(User.username.ilike(f'%{query}%')).all()
+
+    results = [{
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'display_name': user.display_name,
+        'profile_image': user.profile_image
+    } for user in users]
+
+    return jsonify(results), 200
+
+
+
 
 @main_bp.route('/site-profile')
 @login_required

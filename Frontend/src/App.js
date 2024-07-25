@@ -9,6 +9,8 @@ import EditProfilePage from "./pages/EditProfilePage";
 import DiscoverPage from "./pages/DiscoverPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import LogOut from "./pages/LogOutPage";
+import UserProfiles from "./pages/UserProfiles";
+import UserSearch from "./pages/UserSearch";
 
 import { AuthProvider } from "./components/AuthContext";
 
@@ -22,9 +24,11 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<LogInPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/search" element={<UserSearch />} />
           <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/user" element={<UserProfilePage />} />
+          <Route path="/user/:userId" element={<UserProfiles />} />
           <Route path="/logout" element={<LogOut />} />
         </Routes>
       </AuthProvider>

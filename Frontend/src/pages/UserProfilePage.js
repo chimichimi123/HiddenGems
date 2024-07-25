@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import defaultProfileImage from "../images/spotify_user_card-default.jpg";
 
 function UserProfilePage() {
   const [user, setUser] = useState(null);
@@ -91,7 +92,7 @@ function UserProfilePage() {
   const handleUnlinkSpotify = async () => {
     setUnlinking(true);
     try {
-      await axios.get("http://localhost:5000/spotify-auth/unlink-spotify", {
+      await axios.get("http://localhost:5000/unlink-spotify", {
         withCredentials: true,
       });
       setSpotifyUserData(null);
@@ -119,6 +120,17 @@ function UserProfilePage() {
         <div>
           <h2>{user.username}</h2>
           <p>{user.email}</p>
+          <p>Display Name: {user.display_name}</p>
+          <p>Bio: {user.bio}</p>
+          <img
+            src={
+              user.profile_image
+                ? `http://localhost:5000/uploads/${user.profile_image}`
+                : defaultProfileImage
+            }
+            alt="Profile"
+            style={{ width: "150px", height: "150px", borderRadius: "50%" }} // Optional styling
+          />
 
           {spotifyUserData && (
             <div>
@@ -137,12 +149,14 @@ function UserProfilePage() {
                 </a>
               </p>
               <p>Followers: {spotifyUserData.followers.total}</p>
-              {spotifyUserData.images.length > 0 && (
-                <img
-                  src={spotifyUserData.images[0].url}
-                  alt="Spotify Profile"
-                />
-              )}
+              <img
+                src={
+                  spotifyUserData.images.length > 0
+                    ? spotifyUserData.images[0].url
+                    : defaultProfileImage
+                }
+                alt="Spotify Profile"
+              />
               <button onClick={handleUnlinkSpotify} disabled={unlinking}>
                 {unlinking ? "Unlinking..." : "Unlink Spotify Account"}
               </button>

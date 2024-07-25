@@ -3,6 +3,8 @@ from spotipy.cache_handler import CacheHandler
 from flask_login import login_required, current_user
 from spotipy import Spotify, oauth2
 from .models import db, SpotifyAccount
+import logging
+import json
 
 spotify_auth_bp = Blueprint('spotify_auth', __name__)
 
@@ -33,6 +35,9 @@ def spotify_login():
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url)
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @spotify_auth_bp.route('/spotify/callback')
 @login_required
 def spotify_callback():
@@ -49,7 +54,13 @@ def spotify_callback():
     sp = Spotify(auth=access_token)
     user_profile = sp.current_user()
     
+    logger.info(f"User Profile: {json.dumps(user_profile, indent=2)}")
+    
     session.clear()
+    
+    default_profile_image = 'https://www.scdn.co/i/_global/twitter_card-default.jpg'
+    images = user_profile.get('images', [])
+    profile_image = images[0].get('url', default_profile_image) if images else default_profile_image
 
     spotify_account = SpotifyAccount.query.filter_by(user_id=current_user.id).first()
     if not spotify_account:
@@ -58,7 +69,7 @@ def spotify_callback():
             spotify_user_id=user_profile['id'],
             spotify_access_token=access_token,
             spotify_refresh_token=refresh_token,
-            spotify_profile_image=user_profile.get('images', [{}])[0].get('url', ''),
+            spotify_profile_image=profile_image,
             spotify_country=user_profile.get('country', ''),
             spotify_email=user_profile.get('email', ''),
             spotify_followers=user_profile.get('followers', {}).get('total', 0)
@@ -68,7 +79,7 @@ def spotify_callback():
         spotify_account.spotify_user_id = user_profile['id']
         spotify_account.spotify_access_token = access_token
         spotify_account.spotify_refresh_token = refresh_token
-        spotify_account.spotify_profile_image = user_profile.get('images', [{}])[0].get('url', '')
+        spotify_account.spotify_profile_image = profile_image
         spotify_account.spotify_country = user_profile.get('country', '')
         spotify_account.spotify_display_name = user_profile.get('display_name', '')
         spotify_account.spotify_email = user_profile.get('email', '')

@@ -4,9 +4,10 @@ import { Link } from "react-router-dom";
 function Header() {
   return (
     <header>
-      <h1>Spotify Discovery</h1>
+      <h1>Hidden Gems</h1>
       <nav>
         <Link to="/">Home</Link>
+        <Link to="/search">Search</Link>
         <Link to="/dashboard">Dashboard</Link>
         <Link to="/discover">Discover</Link>
         <Link to="/login">Log In</Link>

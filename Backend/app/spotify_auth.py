@@ -1,8 +1,8 @@
-from flask import Blueprint, redirect, request, url_for, session, current_app, jsonify
+from flask import Blueprint, redirect, request, session, current_app, jsonify
 from spotipy.cache_handler import CacheHandler
 from flask_login import login_required, current_user
 from spotipy import Spotify, oauth2
-from .models import db, SpotifyAccount
+from .models import db, SpotifyAccount, SpotifySong
 import logging
 import json
 
@@ -88,10 +88,118 @@ def spotify_callback():
 
     db.session.commit()
     
-    # Save tokens to session
+    playlists = sp.current_user_playlists(limit=50)
+    all_songs = []
+
+    for playlist in playlists['items']:
+        if playlist.get('collaborative', False):
+            continue
+
+        playlist_id = playlist['id']
+        tracks = sp.playlist_tracks(playlist_id)
+        for item in tracks['items']:
+            track = item.get('track')
+            if track and track.get('id'):
+                album = track.get('album', {})
+                song_data = {
+                    'spotify_account_id': spotify_account.id,
+                    'song_id': track.get('id'),
+                    'name': track.get('name'),
+                    'artist': ', '.join(artist.get('name', '') for artist in track.get('artists', [])),
+                    'album': album.get('name', ''),
+                    'popularity': track.get('popularity', 50) if track.get('popularity', 0) == 0 else track.get('popularity', 50),
+                    'image': album.get('images', [{}])[0].get('url', '')
+                }
+                all_songs.append(song_data)
+                
+    liked_albums = sp.current_user_saved_albums(limit=50)
+    for album_item in liked_albums['items']:
+        album = album_item.get('album')
+        if album:
+            for track in album.get('tracks', {}).get('items', []):
+                if track and track.get('id'):
+                    song_data = {
+                        'spotify_account_id': spotify_account.id,
+                        'song_id': track.get('id'),
+                        'name': track.get('name'),
+                        'artist': ', '.join(artist.get('name', '') for artist in track.get('artists', [])),
+                        'album': album.get('name', ''),
+                        'popularity': track.get('popularity', 50) if track.get('popularity', 0) == 0 else track.get('popularity', 50),
+                        'image': album.get('images', [{}])[0].get('url', '')
+                    }
+                    all_songs.append(song_data)
+
+    unique_songs = {song['song_id']: song for song in all_songs}
+    unique_songs_list = list(unique_songs.values())
+
+    existing_song_ids = {song.song_id for song in SpotifySong.query.filter_by(spotify_account_id=spotify_account.id).all()}
+    new_songs = [SpotifySong(**song) for song in unique_songs_list if song['song_id'] not in existing_song_ids]
+
+    db.session.bulk_save_objects(new_songs)
+    db.session.commit()
+    
     FlaskSessionHandler().save_token_to_cache(token_info)
 
     return redirect("http://localhost:3000/user")
+
+
+@spotify_auth_bp.route('/spotify/playlists')
+@login_required
+def get_playlists():
+    sp_oauth = get_spotify_oauth()
+    token_info = sp_oauth.get_cached_token()
+    if not token_info:
+        return "Error: User not authenticated with Spotify", 401
+
+    access_token = token_info['access_token']
+    sp = Spotify(auth=access_token)
+
+    playlists = sp.current_user_playlists(limit=50)
+    playlist_ids = [pl['id'] for pl in playlists['items']]
+    
+    return jsonify(playlist_ids)
+
+@spotify_auth_bp.route('/spotify/playlist-tracks/<playlist_id>')
+@login_required
+def get_playlist_tracks(playlist_id):
+    sp_oauth = get_spotify_oauth()
+    token_info = sp_oauth.get_cached_token()
+    if not token_info:
+        return "Error: User not authenticated with Spotify", 401
+
+    access_token = token_info['access_token']
+    sp = Spotify(auth=access_token)
+
+    results = sp.playlist_tracks(playlist_id)
+    tracks = results['items']
+    while results['next']:
+        results = sp.next(results)
+        tracks.extend(results['items'])
+
+    return jsonify(tracks)
+
+@spotify_auth_bp.route('/spotify/least-popular-songs')
+@login_required
+def get_least_popular_songs():
+    least_popular_songs = SpotifySong.query.filter(
+        SpotifySong.spotify_account_id == current_user.spotify_account.id,
+        SpotifySong.popularity > 5
+    ).order_by(SpotifySong.popularity.asc()).limit(10).all()
+
+    least_popular_tracks = [
+        {
+            'id': song.song_id,
+            'name': song.name,
+            'artist': song.artist,
+            'album': song.album,
+            'popularity': song.popularity
+        }
+        for song in least_popular_songs
+    ]
+
+    return jsonify(least_popular_tracks)
+
+
 
 @spotify_auth_bp.route('/spotify-top-tracks')
 @login_required

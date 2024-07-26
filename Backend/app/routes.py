@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, session, make_response, current_app, send_from_directory
 from flask_login import login_required, current_user, login_user, logout_user
-from .spotify import get_spotify_data
-from .models import db, Song, User, SpotifyAccount
+from .models import db, User, SpotifyAccount, Song
 from datetime import datetime
 from flask_cors import cross_origin
 from flask_bcrypt import Bcrypt, check_password_hash
@@ -18,85 +17,6 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Spotify-related routes
-@main_bp.route('/spotify-data')
-@login_required
-def spotify_data():
-    data = get_spotify_data("https://api.spotify.com/v1/me")
-    return jsonify(data)
-
-@main_bp.route('/add-song', methods=['POST'])
-@login_required
-def add_song():
-    data = request.get_json()
-    song = Song.query.filter_by(spotify_id=data['spotify_id']).first()
-    if not song:
-        song = Song(
-            spotify_id=data['spotify_id'],
-            title=data['title'],
-            artist=data['artist'],
-            release_date=datetime.strptime(data['release_date'], '%Y-%m-%d'),
-            cover_image=data.get('cover_image'),
-            embed_link=data.get('embed_link'),
-            popularity=data.get('popularity'),
-            label=data.get('label')
-        )
-        db.session.add(song)
-        db.session.commit()
-    if song not in current_user.songs:
-        current_user.songs.append(song)
-        db.session.commit()
-    return jsonify({'message': 'Song added to collection'})
-
-@main_bp.route('/liked-songs')
-@login_required
-def liked_songs():
-    liked_songs = current_user.songs
-    return jsonify([song.to_dict() for song in liked_songs])
-
-@main_bp.route('/obscure-songs')
-@login_required
-def obscure_songs():
-    obscure_songs = Song.query.filter(Song.popularity <= 35).all()
-    return jsonify([song.to_dict() for song in obscure_songs])
-
-@main_bp.route('/user-profile')
-@login_required
-def spotify_user_profile():
-    profile_data = get_spotify_data("https://api.spotify.com/v1/me")
-    return jsonify(profile_data)
-
-@main_bp.route('/user-playlists')
-@login_required
-def user_playlists():
-    playlists_data = get_spotify_data("https://api.spotify.com/v1/me/playlists")
-    return jsonify(playlists_data)
-
-@main_bp.route('/playlist-tracks/<playlist_id>')
-@login_required
-def playlist_tracks(playlist_id):
-    tracks_data = get_spotify_data(f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks")
-    return jsonify(tracks_data)
-
-@main_bp.route('/artist-info/<artist_id>')
-@login_required
-def artist_info(artist_id):
-    artist_data = get_spotify_data(f"https://api.spotify.com/v1/artists/{artist_id}")
-    return jsonify(artist_data)
-
-@main_bp.route('/album-info/<album_id>')
-@login_required
-def album_info(album_id):
-    album_data = get_spotify_data(f"https://api.spotify.com/v1/albums/{album_id}")
-    return jsonify(album_data)
-
-@main_bp.route('/search')
-@login_required
-def search():
-    query = request.args.get('q')
-    search_type = request.args.get('type', 'track') 
-    search_data = get_spotify_data(f"https://api.spotify.com/v1/search?q={query}&type={search_type}")
-    return jsonify(search_data)
 
 #####################site routes#####################
 
@@ -162,6 +82,7 @@ def get_user():
     
     user = current_user
     spotifyaccount = SpotifyAccount.query.filter_by(user_id=user.id).first()
+    liked_songs_data = [song.to_dict() for song in user.liked_songs]
 
     user_data = {
         'id': user.id,
@@ -175,6 +96,7 @@ def get_user():
         'spotify_country': spotifyaccount.spotify_country if spotifyaccount else None,
         'created_at': user.created_at.strftime("%Y-%m-%d %H:%M:%S"),
         'songs': [song.to_dict() for song in user.songs],
+        'liked_songs': liked_songs_data,
         'spotify_account': spotifyaccount.to_dict() if spotifyaccount else None,
         'spotify_email': spotifyaccount.spotify_email if spotifyaccount else None,
         'spotify_followers': spotifyaccount.spotify_followers if spotifyaccount else None,
@@ -252,15 +174,3 @@ def search_users():
 
     return jsonify(results), 200
 
-
-
-
-@main_bp.route('/site-profile')
-@login_required
-def site_profile():
-    user_profile = {
-        "username": current_user.username,
-        "email": current_user.email,
-        "created_at": current_user.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-    }
-    return jsonify(user_profile)

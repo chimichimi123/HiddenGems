@@ -11,7 +11,7 @@ function MostObscureSongs() {
     const fetchSongs = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/spotify-songs",
+          "http://localhost:5000/spotify/least-popular-songs",
           {
             withCredentials: true,
           }
@@ -19,16 +19,7 @@ function MostObscureSongs() {
 
         const songsData = response.data;
 
-        // Sort the songs by popularity (ascending)
-        const sortedSongs = songsData.sort(
-          (a, b) => a.popularity - b.popularity
-        );
-
-        // You can adjust the number of obscure songs you want to display
-        const numberOfObscureSongs = 10;
-        const obscureSongs = sortedSongs.slice(0, numberOfObscureSongs);
-
-        setSongs(obscureSongs);
+        setSongs(songsData);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching songs:", error);

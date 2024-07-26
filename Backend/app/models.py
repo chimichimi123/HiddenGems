@@ -18,6 +18,7 @@ class User(db.Model, UserMixin, SerializerMixin):
     display_name = db.Column(db.String(80))
     bio = db.Column(db.Text)
     profile_image = db.Column(db.String(200))
+    
 
     @property
     def is_active(self):
@@ -36,24 +37,11 @@ class User(db.Model, UserMixin, SerializerMixin):
     def get_id(self):
         return str(self.id)
     
-    songs = db.relationship('Song', back_populates='user')
+    liked_songs = db.relationship('LikedSong', back_populates='user')
+    songs = db.relationship('Song', back_populates='user', lazy=True)
     spotify_account = db.relationship('SpotifyAccount', back_populates='user', uselist=False)
-    
-    serialize_rules = ('-spotify_account',)
 
-class Song(db.Model, SerializerMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    spotify_id = db.Column(db.String(50), nullable=False)
-    title = db.Column(db.String(100), nullable=False)
-    artist = db.Column(db.String(100), nullable=False)
-    release_date = db.Column(db.Date, nullable=False)
-    cover_image = db.Column(db.String(255), nullable=True)
-    embed_link = db.Column(db.String(255), nullable=True)
-    popularity = db.Column(db.Integer, nullable=True)
-    label = db.Column(db.String(100), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    user = db.relationship('User', back_populates='songs')
+    serialize_rules = ('-spotify_account', '-liked_songs')
 
 class SpotifyAccount(db.Model, SerializerMixin):
         
@@ -69,5 +57,39 @@ class SpotifyAccount(db.Model, SerializerMixin):
     spotify_followers = db.Column(db.Integer, nullable=True)
 
     user = db.relationship('User', back_populates='spotify_account')
+    spotify_songs = db.relationship('SpotifySong', back_populates='spotify_account')
 
-    serialize_rules = ('-user',)
+    serialize_rules = ('-user', '-spotify_songs')
+
+class SpotifySong(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    spotify_account_id = db.Column(db.Integer, db.ForeignKey('spotify_account.id'), nullable=False)
+    song_id = db.Column(db.String, nullable=False)
+    name = db.Column(db.String, nullable=False)
+    artist = db.Column(db.String, nullable=False)
+    album = db.Column(db.String, nullable=True)
+    popularity = db.Column(db.Integer, nullable=True)
+    image = db.Column(db.String, nullable=True)  # New column for song image
+
+    spotify_account = db.relationship('SpotifyAccount', back_populates='spotify_songs')
+    liked_by_users = db.relationship('LikedSong', back_populates='spotify_song')
+
+    
+class LikedSong(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    spotify_song_id = db.Column(db.Integer, db.ForeignKey('spotify_song.id'), nullable=False)
+    added_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    
+    user = db.relationship('User', back_populates='liked_songs')
+    spotify_song = db.relationship('SpotifySong', back_populates='liked_by_users')
+    
+class Song(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    artist = db.Column(db.String(150), nullable=False)
+    album = db.Column(db.String(150))
+    duration = db.Column(db.Integer)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    user = db.relationship('User', back_populates='songs')

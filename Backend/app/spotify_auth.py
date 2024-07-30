@@ -91,63 +91,65 @@ def spotify_callback():
 
     db.session.commit()
     
-    playlists = sp.current_user_playlists(limit=50)
-    all_songs = []
+    # Commented out code that pulls songs from the user
+    # playlists = sp.current_user_playlists(limit=50)
+    # all_songs = []
 
-    for playlist in playlists['items']:
-        if playlist.get('collaborative', False):
-            continue
+    # for playlist in playlists['items']:
+    #     if playlist.get('collaborative', False):
+    #         continue
 
-        playlist_id = playlist['id']
-        tracks = sp.playlist_tracks(playlist_id)
-        for item in tracks['items']:
-            track = item.get('track')
-            if track and track.get('id'):
-                album = track.get('album', {})
-                images = album.get('images', [])
-                image_url = images[0].get('url', '') if images else ''
-                song_data = {
-                    'spotify_account_id': spotify_account.id,
-                    'song_id': track.get('id'),
-                    'name': track.get('name'),
-                    'artist': ', '.join(artist.get('name') or '' for artist in track.get('artist', [])),
-                    'album': album.get('name', ''),
-                    'popularity': track.get('popularity', 50) if track.get('popularity', 0) == 0 else track.get('popularity', 50),
-                    'image': image_url
-                }
-                all_songs.append(song_data)
+    #     playlist_id = playlist['id']
+    #     tracks = sp.playlist_tracks(playlist_id)
+    #     for item in tracks['items']:
+    #         track = item.get('track')
+    #         if track and track.get('id'):
+    #             album = track.get('album', {})
+    #             images = album.get('images', [])
+    #             image_url = images[0].get('url', '') if images else ''
+    #             song_data = {
+    #                 'spotify_account_id': spotify_account.id,
+    #                 'song_id': track.get('id'),
+    #                 'name': track.get('name'),
+    #                 'artist': ', '.join(artist.get('name') or '' for artist in track.get('artist', [])),
+    #                 'album': album.get('name', ''),
+    #                 'popularity': track.get('popularity', 50) if track.get('popularity', 0) == 0 else track.get('popularity', 50),
+    #                 'image': image_url
+    #             }
+    #             all_songs.append(song_data)
                 
-    liked_albums = sp.current_user_saved_albums(limit=50)
-    for album_item in liked_albums['items']:
-        album = album_item.get('album')
-        if album:
-            images = album.get('images', [])
-            image_url = images[0].get('url', '') if images else ''
-            for track in album.get('tracks', {}).get('items', []):
-                if track and track.get('id'):
-                    song_data = {
-                        'spotify_account_id': spotify_account.id,
-                        'song_id': track.get('id'),
-                        'name': track.get('name'),
-                        'artist': ', '.join(artist.get('name') or '' for artist in track.get('artist', [])),
-                        'album': album.get('name', ''),
-                        'popularity': track.get('popularity', 50) if track.get('popularity', 0) == 0 else track.get('popularity', 50),
-                        'image': image_url
-                    }
-                    all_songs.append(song_data)
+    # liked_albums = sp.current_user_saved_albums(limit=50)
+    # for album_item in liked_albums['items']:
+    #     album = album_item.get('album')
+    #     if album:
+    #         images = album.get('images', [])
+    #         image_url = images[0].get('url', '') if images else ''
+    #         for track in album.get('tracks', {}).get('items', []):
+    #             if track and track.get('id'):
+    #                 song_data = {
+    #                     'spotify_account_id': spotify_account.id,
+    #                     'song_id': track.get('id'),
+    #                     'name': track.get('name'),
+    #                     'artist': ', '.join(artist.get('name') or '' for artist in track.get('artist', [])),
+    #                     'album': album.get('name', ''),
+    #                     'popularity': track.get('popularity', 50) if track.get('popularity', 0) == 0 else track.get('popularity', 50),
+    #                     'image': image_url
+    #                 }
+    #                 all_songs.append(song_data)
 
-    unique_songs = {song['song_id']: song for song in all_songs}
-    unique_songs_list = list(unique_songs.values())
+    # unique_songs = {song['song_id']: song for song in all_songs}
+    # unique_songs_list = list(unique_songs.values())
 
-    existing_song_ids = {song.song_id for song in SpotifySong.query.filter_by(spotify_account_id=spotify_account.id).all()}
-    new_songs = [SpotifySong(**song) for song in unique_songs_list if song['song_id'] not in existing_song_ids]
+    # existing_song_ids = {song.song_id for song in SpotifySong.query.filter_by(spotify_account_id=spotify_account.id).all()}
+    # new_songs = [SpotifySong(**song) for song in unique_songs_list if song['song_id'] not in existing_song_ids]
 
-    db.session.bulk_save_objects(new_songs)
-    db.session.commit()
+    # db.session.bulk_save_objects(new_songs)
+    # db.session.commit()
     
     FlaskSessionHandler().save_token_to_cache(token_info)
 
     return redirect("http://localhost:3000/user")
+
 
 
 @spotify_auth_bp.route('/spotify/playlists')
@@ -286,7 +288,7 @@ def spotify_top_tracks():
         for track in top_tracks['items']:
             embed_url = f"https://open.spotify.com/embed/track/{track['id']}"
             album_images = track['album']['images']
-            album_image_url = album_images[0]['url'] if album_images else ''  # Use the largest image or default to empty
+            album_image_url = album_images[0]['url'] if album_images else '' 
             
             track_data = {
                 'id': track['id'],

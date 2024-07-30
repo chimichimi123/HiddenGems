@@ -1,12 +1,13 @@
+// src/pages/FavoriteArtistsPage.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import ArtistDetails from "../components/ArtistDetails";
 
 const FavoriteArtistsPage = () => {
   const [spotifyData, setSpotifyData] = useState({ topArtists: [] });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [selectedArtist, setSelectedArtist] = useState(null);
 
   useEffect(() => {
     const fetchSpotifyTopArtists = async () => {
@@ -30,7 +31,11 @@ const FavoriteArtistsPage = () => {
     };
 
     fetchSpotifyTopArtists();
-  }, [navigate]);
+  }, []);
+
+  const handleArtistClick = (artistId) => {
+    setSelectedArtist(artistId);
+  };
 
   if (loading) {
     return <p>Loading...</p>;
@@ -43,15 +48,32 @@ const FavoriteArtistsPage = () => {
   return (
     <div>
       <h2>Favorite Artists</h2>
-      {spotifyData.topArtists.length > 0 ? (
-        <ul>
-          {spotifyData.topArtists.map((artist) => (
-            <li key={artist.id}>{artist.name}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>No favorite artists found.</p>
-      )}
+      <div style={{ display: "flex", flexWrap: "wrap" }}>
+        {spotifyData.topArtists.length > 0 ? (
+          spotifyData.topArtists.map((artist) => (
+            <div
+              key={artist.id}
+              onClick={() => handleArtistClick(artist.id)}
+              style={{
+                margin: "10px",
+                cursor: "pointer",
+                textAlign: "center",
+                width: "150px",
+              }}
+            >
+              <img
+                src={artist.image_url}
+                alt={`${artist.name} image`}
+                style={{ width: "100px", height: "100px" }}
+              />
+              <p>{artist.name}</p>
+            </div>
+          ))
+        ) : (
+          <p>No favorite artists found.</p>
+        )}
+      </div>
+      {selectedArtist && <ArtistDetails artistId={selectedArtist} />}
     </div>
   );
 };

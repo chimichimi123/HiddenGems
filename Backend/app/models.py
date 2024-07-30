@@ -46,7 +46,7 @@ class User(db.Model, UserMixin, SerializerMixin):
 class SpotifyAccount(db.Model, SerializerMixin):
         
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     spotify_user_id = db.Column(db.String, nullable=False)
     spotify_access_token = db.Column(db.String, nullable=False)
     spotify_refresh_token = db.Column(db.String, nullable=True)
@@ -61,30 +61,38 @@ class SpotifyAccount(db.Model, SerializerMixin):
 
     serialize_rules = ('-user', '-spotify_songs')
 
-class SpotifySong(db.Model):
+class SpotifySong(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     spotify_account_id = db.Column(db.Integer, db.ForeignKey('spotify_account.id'), nullable=False)
-    song_id = db.Column(db.String, nullable=False)
+    song_id = db.Column(db.String, unique=True, nullable=False)
     name = db.Column(db.String, nullable=False)
     artist = db.Column(db.String, nullable=False)
     album = db.Column(db.String, nullable=True)
     popularity = db.Column(db.Integer, nullable=True)
-    image = db.Column(db.String, nullable=True)  # New column for song image
+    image = db.Column(db.String, nullable=True)
 
     spotify_account = db.relationship('SpotifyAccount', back_populates='spotify_songs')
     liked_by_users = db.relationship('LikedSong', back_populates='spotify_song')
-
     
-class LikedSong(db.Model):
+    serialize_rules = ('-spotify_account', '-liked_by_users.user')
+
+class LikedSong(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    spotify_song_id = db.Column(db.Integer, db.ForeignKey('spotify_song.id'), nullable=False)
+    spotify_song_id = db.Column(db.String, db.ForeignKey('spotify_song.id'), nullable=False)
     added_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    name = db.Column(db.String, nullable=False)
+    artist = db.Column(db.String, nullable=False)
+    album = db.Column(db.String, nullable=True)
+    image = db.Column(db.String, nullable=True)
+    popularity = db.Column(db.Integer, nullable=True)
     
     user = db.relationship('User', back_populates='liked_songs')
     spotify_song = db.relationship('SpotifySong', back_populates='liked_by_users')
     
-class Song(db.Model):
+    serialize_rules = ('-user', '-spotify_song.liked_by_users')
+    
+class Song(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     artist = db.Column(db.String(150), nullable=False)
@@ -93,3 +101,5 @@ class Song(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     user = db.relationship('User', back_populates='songs')
+    
+    serialize_rules = ('-user',)

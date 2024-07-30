@@ -25,7 +25,7 @@ def create_app():
         if request.method == 'OPTIONS':
             response = jsonify({'message': 'Preflight request'})
             response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
-            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
             response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
             response.headers.add('Access-Control-Allow-Credentials', 'true')
             return response

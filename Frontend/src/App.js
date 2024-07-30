@@ -11,6 +11,8 @@ import UserProfilePage from "./pages/UserProfilePage";
 import LogOut from "./pages/LogOutPage";
 import UserProfiles from "./pages/UserProfiles";
 import UserSearch from "./pages/UserSearch";
+import SongDetails from "./pages/SongDetails";
+import LikedSongs from "./components/LikedSongs";
 
 import { AuthProvider } from "./components/AuthContext";
 
@@ -22,9 +24,11 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/song/:id" element={<SongDetails />} />
           <Route path="/login" element={<LogInPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/search" element={<UserSearch />} />
+          <Route path="/spotify/liked_songs" element={<LikedSongs />} />
           <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/user" element={<UserProfilePage />} />

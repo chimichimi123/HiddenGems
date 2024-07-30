@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, make_response, current_app, send_from_directory
 from flask_login import login_required, current_user, login_user, logout_user
-from .models import db, User, SpotifyAccount, Song
+from .models import db, User, SpotifyAccount, LikedSong, SpotifySong
 from datetime import datetime
 from flask_cors import cross_origin
 from flask_bcrypt import Bcrypt, check_password_hash
@@ -16,6 +16,10 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           
+           
+
+#########################SPOTIFY ROUTES#####################
 
 
 #####################site routes#####################

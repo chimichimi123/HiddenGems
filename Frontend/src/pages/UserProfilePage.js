@@ -6,10 +6,6 @@ import defaultProfileImage from "../images/spotify_user_card-default.jpg";
 function UserProfilePage() {
   const [user, setUser] = useState(null);
   const [spotifyUserData, setSpotifyUserData] = useState(null);
-  const [spotifyData, setSpotifyData] = useState({
-    topTracks: [],
-    topArtists: [],
-  });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unlinking, setUnlinking] = useState(false);
@@ -30,46 +26,6 @@ function UserProfilePage() {
       }
     };
 
-    fetchUserData();
-  }, [navigate]);
-
-  useEffect(() => {
-    const fetchSpotifyTopTracks = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:5000/spotify-top-tracks",
-          {
-            withCredentials: true,
-          }
-        );
-        setSpotifyData((prevState) => ({
-          ...prevState,
-          topTracks: response.data,
-        }));
-      } catch (error) {
-        console.error("Error fetching top tracks:", error);
-        setError("Failed to fetch top tracks. Please try again later.");
-      }
-    };
-
-    const fetchSpotifyTopArtists = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:5000/spotify-top-artists",
-          {
-            withCredentials: true,
-          }
-        );
-        setSpotifyData((prevState) => ({
-          ...prevState,
-          topArtists: response.data,
-        }));
-      } catch (error) {
-        console.error("Error fetching top artists:", error);
-        setError("Failed to fetch top artists. Please try again later.");
-      }
-    };
-
     const fetchSpotifyUserData = async () => {
       try {
         const response = await axios.get("http://localhost:5000/spotify-data", {
@@ -82,12 +38,9 @@ function UserProfilePage() {
       }
     };
 
-    if (user && user.id) {
-      fetchSpotifyTopTracks();
-      fetchSpotifyTopArtists();
-      fetchSpotifyUserData();
-    }
-  }, [user]);
+    fetchUserData();
+    fetchSpotifyUserData();
+  }, []);
 
   const handleUnlinkSpotify = async () => {
     setUnlinking(true);
@@ -96,7 +49,6 @@ function UserProfilePage() {
         withCredentials: true,
       });
       setSpotifyUserData(null);
-      setSpotifyData({ topTracks: [], topArtists: [] });
       setUnlinking(false);
       navigate("/user");
     } catch (error) {
@@ -160,31 +112,6 @@ function UserProfilePage() {
               <button onClick={handleUnlinkSpotify} disabled={unlinking}>
                 {unlinking ? "Unlinking..." : "Unlink Spotify Account"}
               </button>
-            </div>
-          )}
-
-          {spotifyData.topTracks.length > 0 && (
-            <div>
-              <h3>Top Tracks</h3>
-              <ul>
-                {spotifyData.topTracks.map((track) => (
-                  <li key={track.id}>
-                    {track.name} by{" "}
-                    {track.artists.map((artist) => artist.name).join(", ")}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {spotifyData.topArtists.length > 0 && (
-            <div>
-              <h3>Top Artists</h3>
-              <ul>
-                {spotifyData.topArtists.map((artist) => (
-                  <li key={artist.id}>{artist.name}</li>
-                ))}
-              </ul>
             </div>
           )}
         </div>

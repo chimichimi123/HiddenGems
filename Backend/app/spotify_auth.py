@@ -104,14 +104,16 @@ def spotify_callback():
             track = item.get('track')
             if track and track.get('id'):
                 album = track.get('album', {})
+                images = album.get('images', [])
+                image_url = images[0].get('url', '') if images else ''
                 song_data = {
                     'spotify_account_id': spotify_account.id,
                     'song_id': track.get('id'),
                     'name': track.get('name'),
-                    'artist': ', '.join(artist.get('name', '') for artist in track.get('artists', [])),
+                    'artist': ', '.join(artist.get('name') or '' for artist in track.get('artist', [])),
                     'album': album.get('name', ''),
                     'popularity': track.get('popularity', 50) if track.get('popularity', 0) == 0 else track.get('popularity', 50),
-                    'image': album.get('images', [{}])[0].get('url', '')
+                    'image': image_url
                 }
                 all_songs.append(song_data)
                 
@@ -119,16 +121,18 @@ def spotify_callback():
     for album_item in liked_albums['items']:
         album = album_item.get('album')
         if album:
+            images = album.get('images', [])
+            image_url = images[0].get('url', '') if images else ''
             for track in album.get('tracks', {}).get('items', []):
                 if track and track.get('id'):
                     song_data = {
                         'spotify_account_id': spotify_account.id,
                         'song_id': track.get('id'),
                         'name': track.get('name'),
-                        'artist': ', '.join(artist.get('name', '') for artist in track.get('artists', [])),
+                        'artist': ', '.join(artist.get('name') or '' for artist in track.get('artist', [])),
                         'album': album.get('name', ''),
                         'popularity': track.get('popularity', 50) if track.get('popularity', 0) == 0 else track.get('popularity', 50),
-                        'image': album.get('images', [{}])[0].get('url', '')
+                        'image': image_url
                     }
                     all_songs.append(song_data)
 

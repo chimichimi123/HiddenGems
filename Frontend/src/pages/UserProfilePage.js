@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar"; // Ensure the path is correct
 import defaultProfileImage from "../images/spotify_user_card-default.jpg";
 
 function UserProfilePage() {
@@ -67,57 +68,60 @@ function UserProfilePage() {
   }
 
   return (
-    <div>
-      {user ? (
-        <div>
-          <h2>{user.username}</h2>
-          <p>{user.email}</p>
-          <p>Display Name: {user.display_name}</p>
-          <p>Bio: {user.bio}</p>
-          <img
-            src={
-              user.profile_image
-                ? `http://localhost:5000/uploads/${user.profile_image}`
-                : defaultProfileImage
-            }
-            alt="Profile"
-            style={{ width: "150px", height: "150px", borderRadius: "50%" }}
-          />
+    <div style={{ display: "flex" }}>
+      <Sidebar />
+      <div style={{ marginLeft: "200px" }}>
+        {user ? (
+          <div>
+            <h2>{user.username}</h2>
+            <p>{user.email}</p>
+            <p>Display Name: {user.display_name}</p>
+            <p>Bio: {user.bio}</p>
+            <img
+              src={
+                user.profile_image
+                  ? `http://localhost:5000/uploads/${user.profile_image}`
+                  : defaultProfileImage
+              }
+              alt="Profile"
+              style={{ width: "150px", height: "150px", borderRadius: "50%" }}
+            />
 
-          {spotifyUserData && (
-            <div>
-              <h3>Spotify Profile</h3>
-              <p>Display Name: {spotifyUserData.display_name}</p>
-              <p>Email: {spotifyUserData.email}</p>
-              <p>Country: {spotifyUserData.country}</p>
-              <p>
-                Spotify Profile:{" "}
-                <a
-                  href={spotifyUserData.external_urls.spotify}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {spotifyUserData.external_urls.spotify}
-                </a>
-              </p>
-              <p>Followers: {spotifyUserData.followers.total}</p>
-              <img
-                src={
-                  spotifyUserData.images.length > 0
-                    ? spotifyUserData.images[0].url
-                    : defaultProfileImage
-                }
-                alt="Spotify Profile"
-              />
-              <button onClick={handleUnlinkSpotify} disabled={unlinking}>
-                {unlinking ? "Unlinking..." : "Unlink Spotify Account"}
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <p>No user data available.</p>
-      )}
+            {spotifyUserData && (
+              <div>
+                <h3>Spotify Profile</h3>
+                <p>Display Name: {spotifyUserData.display_name}</p>
+                <p>Email: {spotifyUserData.email}</p>
+                <p>Country: {spotifyUserData.country}</p>
+                <p>
+                  Spotify Profile:{" "}
+                  <a
+                    href={spotifyUserData.external_urls.spotify}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {spotifyUserData.external_urls.spotify}
+                  </a>
+                </p>
+                <p>Followers: {spotifyUserData.followers.total}</p>
+                <img
+                  src={
+                    spotifyUserData.images.length > 0
+                      ? spotifyUserData.images[0].url
+                      : defaultProfileImage
+                  }
+                  alt="Spotify Profile"
+                />
+                <button onClick={handleUnlinkSpotify} disabled={unlinking}>
+                  {unlinking ? "Unlinking..." : "Unlink Spotify Account"}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p>No user data available.</p>
+        )}
+      </div>
     </div>
   );
 }

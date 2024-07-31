@@ -1,10 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const SongList = ({ songs }) => {
+const SongList = ({ songs = [] }) => {
   return (
     <div>
-      <h2>Song List</h2>
       {songs.length === 0 ? (
         <p>No songs available</p>
       ) : (

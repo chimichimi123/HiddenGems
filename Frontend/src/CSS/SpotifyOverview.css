@@ -1,0 +1,12 @@
+.spotify-overview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Adjust the gap between components as needed */
+  justify-content: center; /* Center the components */
+}
+
+.spotify-overview > div {
+  flex: 1 1 300px; /* Adjust the base width as needed */
+  min-width: 300px; /* Ensure the components don't get too narrow */
+  max-width: 500px; /* Optionally set a max width */
+}

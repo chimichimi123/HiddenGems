@@ -106,42 +106,6 @@ def spotify_callback():
 
     return redirect("http://localhost:3000/user")
 
-
-@spotify_auth_bp.route('/spotify/playlists')
-@login_required
-def get_playlists():
-    sp_oauth = get_spotify_oauth()
-    token_info = sp_oauth.get_cached_token()
-    if not token_info:
-        return "Error: User not authenticated with Spotify", 401
-
-    access_token = token_info['access_token']
-    sp = Spotify(auth=access_token)
-
-    playlists = sp.current_user_playlists(limit=15)
-    playlist_ids = [pl['id'] for pl in playlists['items']]
-    
-    return jsonify(playlist_ids)
-
-@spotify_auth_bp.route('/spotify/playlist-tracks/<playlist_id>')
-@login_required
-def get_playlist_tracks(playlist_id):
-    sp_oauth = get_spotify_oauth()
-    token_info = sp_oauth.get_cached_token()
-    if not token_info:
-        return "Error: User not authenticated with Spotify", 401
-
-    access_token = token_info['access_token']
-    sp = Spotify(auth=access_token)
-
-    results = sp.playlist_tracks(playlist_id)
-    tracks = results['items']
-    while results['next']:
-        results = sp.next(results)
-        tracks.extend(results['items'])
-
-    return jsonify(tracks)
-
 @spotify_auth_bp.route('/spotify/least-popular-songs')
 @login_required
 def get_least_popular_songs():
@@ -571,64 +535,51 @@ def unlike_song(song_id):
 @spotify_auth_bp.route('/spotify/user-profile/<int:user_id>', methods=['GET'])
 @login_required
 def user_profile(user_id):
-    spotify_account = SpotifyAccount.query.filter_by(user_id=user_id).first()
-    if not spotify_account:
-        return jsonify({"error": "Spotify account not found for this user"}), 404
-
-    sp = Spotify(auth=spotify_account.spotify_access_token)
-
     try:
-        top_tracks = sp.current_user_top_tracks(limit=10)['items']
-        top_artists = sp.current_user_top_artists(limit=10)['items']
-        
-        least_popular_songs = sp.current_user_top_tracks(limit=50)['items']
-        least_popular_songs = [track for track in least_popular_songs if track['popularity'] > 0]
-        sorted_tracks = sorted(least_popular_songs, key=lambda x: x['popularity'])
-        
-        least_obscure_tracks = []
-        included_artists = set()
-        included_albums = set()
-        for track in sorted_tracks:
-            artist_names = ', '.join(artist['name'] for artist in track['artists'])
-            album_name = track['album']['name']
-            if artist_names not in included_artists and album_name not in included_albums:
-                included_artists.add(artist_names)
-                included_albums.add(album_name)
-                embed_url = f"https://open.spotify.com/embed/track/{track['id']}"
-                least_obscure_tracks.append({
-                    'id': track['id'],
-                    'name': track['name'],
-                    'artist': artist_names,
-                    'album': album_name,
-                    'popularity': track['popularity'],
-                    'image_url': track['album']['images'][0]['url'] if track['album']['images'] else '',
-                    'embed_url': embed_url
-                })
-                if len(least_obscure_tracks) >= 10:
-                    break
+        spotify_account = SpotifyAccount.query.filter_by(user_id=user_id).first()
+        if not spotify_account:
+            return jsonify({"error": "Spotify account not found for this user"}), 404
+
+        top_tracks = TopTrack.query.filter_by(user_id=user_id).all()
+        top_artists = TopArtist.query.filter_by(user_id=user_id).all()
+        least_popular_tracks = LeastPopularTrack.query.filter_by(user_id=user_id).all()
 
         profile_data = {
             'top_tracks': [
                 {
-                    'id': track['id'],
-                    'name': track['name'],
-                    'artist': ', '.join(artist['name'] for artist in track['artists']),
-                    'album': track['album']['name'],
-                    'popularity': track['popularity'],
-                    'image_url': track['album']['images'][0]['url'] if track['album']['images'] else '',
-                    'embed_url': f"https://open.spotify.com/embed/track/{track['id']}"
+                    'id': track.id,
+                    'name': track.name,
+                    'artist': track.artist,
+                    'album': track.album,
+                    'popularity': track.popularity,
+                    'image_url': track.image_url,
+                    'embed_url': track.embed_url
                 }
                 for track in top_tracks
             ],
             'top_artists': [
                 {
-                    'id': artist['id'],
-                    'name': artist['name'],
-                    'image_url': artist['images'][0]['url'] if artist['images'] else ''
+                    'id': artist.id,
+                    'name': artist.name,
+                    'image_url': artist.image_url,
+                    'followers': artist.followers,
+                    'genres': artist.genres,
+                    'popularity': artist.popularity
                 }
                 for artist in top_artists
             ],
-            'least_obscure_tracks': least_obscure_tracks
+            'least_popular_tracks': [
+                {
+                    'id': track.id,
+                    'name': track.name,
+                    'artist': track.artist,
+                    'album': track.album,
+                    'popularity': track.popularity,
+                    'image_url': track.image_url,
+                    'embed_url': track.embed_url
+                }
+                for track in least_popular_tracks
+            ]
         }
 
         return jsonify(profile_data)

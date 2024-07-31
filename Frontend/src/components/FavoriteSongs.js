@@ -41,7 +41,7 @@ const FavoriteSongsPage = () => {
 
   return (
     <div>
-      <h2>Favorite Songs</h2>
+      <h2>These were your favorite songs recently</h2>
       <SongList songs={songs} /> {}
     </div>
   );

@@ -41,7 +41,7 @@ function MostObscureSongs() {
 
   return (
     <div>
-      <h3>Most Obscure Songs</h3>
+      <h3>Out of all of your top songs lately these were the most obscure</h3>
       <SongList songs={songs} />
     </div>
   );

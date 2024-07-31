@@ -32,7 +32,7 @@ function App() {
           <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/user" element={<UserProfilePage />} />
-          <Route path="/user/:userId" element={<UserProfiles />} />
+          <Route path="/spotify/user/:userId" element={<UserProfiles />} />
           <Route path="/logout" element={<LogOut />} />
         </Routes>
       </AuthProvider>

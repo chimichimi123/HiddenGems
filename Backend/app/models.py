@@ -1,12 +1,8 @@
 from sqlalchemy_serializer import SerializerMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from . import db, login_manager
+from .BAH import db
 from datetime import datetime
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 class User(db.Model, UserMixin, SerializerMixin):
     
@@ -101,5 +97,47 @@ class Song(db.Model, SerializerMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     user = db.relationship('User', back_populates='songs')
+    
+    serialize_rules = ('-user',)
+    
+class TopArtist(db.Model, SerializerMixin):
+    id = db.Column(db.String, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    image_url = db.Column(db.String)
+    followers = db.Column(db.Integer)
+    genres = db.Column(db.String)
+    popularity = db.Column(db.Integer)
+    
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('top_artists', lazy=True))
+    
+    serialize_rules = ('-user',)
+
+class TopTrack(db.Model, SerializerMixin):
+    id = db.Column(db.String, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    artist = db.Column(db.String, nullable=False)
+    album = db.Column(db.String)
+    popularity = db.Column(db.Integer)
+    image_url = db.Column(db.String)
+    embed_url = db.Column(db.String)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('top_tracks', lazy=True))
+    
+    serialize_rules = ('-user',)
+
+class LeastPopularTrack(db.Model, SerializerMixin):
+    id = db.Column(db.String, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    artist = db.Column(db.String, nullable=False)
+    album = db.Column(db.String)
+    popularity = db.Column(db.Integer)
+    image_url = db.Column(db.String)
+    embed_url = db.Column(db.String)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('least_popular_tracks', lazy=True))
     
     serialize_rules = ('-user',)

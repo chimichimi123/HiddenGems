@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const ArtistDetails = ({ artistId }) => {
+const ArtistDetails = ({ artistId, onBackClick }) => {
   const [artistDetails, setArtistDetails] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,8 +20,8 @@ const ArtistDetails = ({ artistId }) => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching artist details:", error);
-        setLoading(false);
         setError("Failed to fetch artist details. Please try again later.");
+        setLoading(false);
       }
     };
 
@@ -53,6 +53,7 @@ const ArtistDetails = ({ artistId }) => {
         />
       </p>
       <p>Popularity: {artistDetails.popularity}</p>
+      <button onClick={onBackClick}>Back to list</button>
     </div>
   );
 };

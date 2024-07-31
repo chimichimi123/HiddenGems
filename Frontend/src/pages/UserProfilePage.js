@@ -81,7 +81,7 @@ function UserProfilePage() {
                 : defaultProfileImage
             }
             alt="Profile"
-            style={{ width: "150px", height: "150px", borderRadius: "50%" }} // Optional styling
+            style={{ width: "150px", height: "150px", borderRadius: "50%" }}
           />
 
           {spotifyUserData && (

@@ -1,14 +1,8 @@
 from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_login import LoginManager
 from flask_cors import CORS
 from .config import Config
-
-db = SQLAlchemy()
-migrate = Migrate()
-login_manager = LoginManager()
-login_manager.login_view = 'main.login'
+from .BAH import db, migrate, login_manager
+from .models import User, SpotifyAccount
 
 def create_app():
     app = Flask(__name__)
@@ -34,7 +28,18 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
-    
+    @login_manager.user_loader
+    def load_user(user_id):
+        user = User.query.get(int(user_id))
+        
+        if user:
+            spotify_account = SpotifyAccount.query.filter_by(user_id=user.id).first()
+            if spotify_account and spotify_account.spotify_access_token:
+                pass
+            
+            return user
+        return None
+
     from .spotify_auth import spotify_auth_bp
     app.register_blueprint(spotify_auth_bp)
 

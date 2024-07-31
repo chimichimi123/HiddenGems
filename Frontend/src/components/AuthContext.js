@@ -1,4 +1,3 @@
-// src/components/AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -13,12 +12,27 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:5000/check_login", {
+        const response = await axios.get("http://localhost:5000/check_login", {
           withCredentials: true,
         });
         if (response.data.logged_in) {
           setIsAuthenticated(true);
           setUser(response.data.user);
+
+          // Check if Spotify login is required
+          const spotifyResponse = await axios.get(
+            "http://localhost:5000/spotify-login",
+            {
+              withCredentials: true,
+            }
+          );
+
+          if (!spotifyResponse.data.success) {
+            // Redirect to Spotify login if not logged in
+            window.location.href = "http://localhost:5000/spotify/login";
+          }
+        } else {
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error("Error checking authentication status:", error);
@@ -27,7 +41,7 @@ const AuthProvider = ({ children }) => {
     };
 
     checkAuthStatus();
-  }, []);
+  }, [navigate]);
 
   const login = async (email, password) => {
     try {
@@ -41,8 +55,23 @@ const AuthProvider = ({ children }) => {
           withCredentials: true,
         }
       );
-      setIsAuthenticated(true);
-      setUser(response.data.user);
+
+      if (response.status === 200) {
+        setIsAuthenticated(true);
+        setUser(response.data.user);
+
+        // Redirect to Spotify login if needed
+        const spotifyResponse = await axios.get(
+          "http://localhost:5000/spotify-login",
+          {
+            withCredentials: true,
+          }
+        );
+
+        if (!spotifyResponse.data.success) {
+          window.location.href = "http://localhost:5000/spotify/login";
+        }
+      }
     } catch (error) {
       console.error("Error logging in:", error);
     }

@@ -26,7 +26,7 @@ function UserSearch() {
   };
 
   const handleUserClick = (userId) => {
-    navigate(`/user/${userId}`);
+    navigate(`/spotify/user/${userId}`);
   };
 
   return (

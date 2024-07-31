@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify, session, make_response, current_app, send_from_directory
+from flask import Blueprint, request, jsonify, session, make_response, current_app, send_from_directory, url_for, redirect
 from flask_login import login_required, current_user, login_user, logout_user
 from .models import db, User, SpotifyAccount, LikedSong, SpotifySong
 from datetime import datetime
+from spotipy import Spotify
+from .spotify_auth import get_spotify_oauth, FlaskSessionHandler
 from flask_cors import cross_origin
 from flask_bcrypt import Bcrypt, check_password_hash
 from werkzeug.utils import secure_filename
@@ -55,6 +57,13 @@ def login():
     user = User.query.filter_by(email=email).first()
     if user and check_password_hash(user.password_hash, password):
         login_user(user)
+        session['spotify_token'] = None
+        
+        spotify_account = SpotifyAccount.query.filter_by(user_id=user.id).first()
+        if not spotify_account or not spotify_account.spotify_access_token:
+            sp_oauth = get_spotify_oauth()
+            return redirect(sp_oauth.get_authorize_url())
+        
         response = jsonify({'message': 'Login successful!', 'user': user.to_dict()})
         return response, 200
     else:
@@ -70,7 +79,6 @@ def check_login():
         return jsonify({'logged_in': False})
 
 @main_bp.route('/logout', methods=['POST'])
-@cross_origin(supports_credentials=True)
 @login_required
 def logout():
     logout_user()

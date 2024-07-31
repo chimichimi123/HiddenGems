@@ -57,7 +57,6 @@ def login():
     user = User.query.filter_by(email=email).first()
     if user and check_password_hash(user.password_hash, password):
         login_user(user)
-        session['spotify_token'] = None
         
         spotify_account = SpotifyAccount.query.filter_by(user_id=user.id).first()
         if not spotify_account or not spotify_account.spotify_access_token:

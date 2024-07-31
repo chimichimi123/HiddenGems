@@ -9,7 +9,7 @@ const LikedSongs = () => {
     const fetchLikedSongs = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/spotify/liked_songs"
+          "http://localhost:5000/user/liked_songs"
         );
         setLikedSongs(response.data);
       } catch (error) {
@@ -22,10 +22,9 @@ const LikedSongs = () => {
 
   const handleDelete = async (songId) => {
     try {
-      await axios.delete(
-        `http://localhost:5000/spotify/unlike_song/${songId}`,
-        { withCredentials: true }
-      );
+      await axios.delete(`http://localhost:5000/user/unlike_song/${songId}`, {
+        withCredentials: true,
+      });
       setLikedSongs(
         likedSongs.filter((song) => song.spotify_song_id !== songId)
       );
@@ -53,7 +52,7 @@ const LikedSongs = () => {
                   width="300"
                   height="80"
                   frameBorder="0"
-                  allowTransparency="true"
+                  allowtransparency="true"
                   allow="encrypted-media"
                 ></iframe>
               </div>

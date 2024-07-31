@@ -22,7 +22,7 @@ const Discover = () => {
 
   const likeSong = async (song) => {
     try {
-      await axios.post("http://localhost:5000/spotify/like_song", {
+      await axios.post("http://localhost:5000/user/like_song", {
         spotify_song_id: song.id,
         name: song.name,
         artist: song.artist,
@@ -39,7 +39,7 @@ const Discover = () => {
   return (
     <div>
       <h2>Discover New Music</h2>
-      <Link to="/spotify/liked_songs">My Liked Songs</Link>
+      <Link to="/user/liked_songs">My Liked Songs</Link>
       <div className="recommendations">
         {recommendations.map((song) => (
           <div key={song.id} className="song">

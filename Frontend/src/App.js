@@ -28,7 +28,7 @@ function App() {
           <Route path="/login" element={<LogInPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/search" element={<UserSearch />} />
-          <Route path="/spotify/liked_songs" element={<LikedSongs />} />
+          <Route path="/user/liked_songs" element={<LikedSongs />} />
           <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/user" element={<UserProfilePage />} />

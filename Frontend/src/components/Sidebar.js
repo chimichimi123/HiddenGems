@@ -6,7 +6,7 @@ function Sidebar() {
   return (
     <aside>
       <nav>
-        <Link to="/dashboard">My Liked Songs</Link>
+        <Link to="/user/liked_songs">My Liked Songs</Link>
         <Link to="/dashboard">My Playlists</Link>
         <Link to="/edit-profile">Edit Profile</Link>
       </nav>

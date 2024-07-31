@@ -40,5 +40,8 @@ def create_app():
 
     from .routes import main_bp
     app.register_blueprint(main_bp)
+    
+    from .User_routes import user_bp
+    app.register_blueprint(user_bp, url_prefix='/user')
 
     return app

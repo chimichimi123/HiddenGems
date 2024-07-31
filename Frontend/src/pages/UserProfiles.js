@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import defaultProfileImage from "../images/spotify_user_card-default.jpg";
+import UserLikedSongs from "../components/UserLikedSongs";
 
 function UserProfiles() {
-  const { userId } = useParams(); // Get userId from URL parameters
+  const { userId } = useParams();
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,7 @@ function UserProfiles() {
             alt="Profile"
             style={{ width: "150px", height: "150px", borderRadius: "50%" }}
           />
+          <UserLikedSongs userId={userId} />
         </div>
       ) : (
         <p>No user data available.</p>

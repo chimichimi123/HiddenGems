@@ -178,3 +178,21 @@ def search_users():
 
     return jsonify(results), 200
 
+@main_bp.route('/user/<int:user_id>/liked_songs', methods=['GET'])
+@login_required
+def get_liked_songs(user_id):
+    user = User.query.get_or_404(user_id)
+    liked_songs = LikedSong.query.filter_by(user_id=user.id).all()
+    liked_songs_data = [
+        {
+            'id': liked_song.id,
+            'name': liked_song.name,
+            'artist': liked_song.artist,
+            'album': liked_song.album,
+            'image': liked_song.image,
+            'popularity': liked_song.popularity,
+            'spotify_song_id': liked_song.spotify_song_id
+        }
+        for liked_song in liked_songs
+    ]
+    return jsonify(liked_songs_data)

@@ -19,12 +19,17 @@ const FavoriteSongsPage = () => {
         );
 
         const songsData = response.data;
+        console.log("Fetched songs data:", songsData); // Add this line
         setSongs(songsData);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching top tracks:", error);
         setLoading(false);
-        setError("Failed to fetch top tracks. Please try again later.");
+        if (error.response && error.response.status === 401) {
+          setError("User not authenticated with Spotify. Please log in.");
+        } else {
+          setError("Failed to fetch top tracks. Please try again later.");
+        }
       }
     };
 

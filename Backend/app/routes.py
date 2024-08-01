@@ -3,7 +3,9 @@ from flask_login import login_required, current_user, login_user, logout_user
 from .models import db, User, SpotifyAccount, LikedSong, SpotifySong
 from datetime import datetime
 from spotipy import Spotify
-from .spotify_auth import get_spotify_oauth, FlaskSessionHandler
+from .spotify_auth import FlaskSessionHandler
+from spotipy.oauth2 import SpotifyOAuth
+import spotipy
 from flask_cors import cross_origin
 from flask_bcrypt import Bcrypt, check_password_hash
 from werkzeug.utils import secure_filename
@@ -18,6 +20,22 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           
+           
+
+def get_spotify_oauth():
+    SPOTIPY_CLIENT_ID = current_app.config['SPOTIPY_CLIENT_ID']
+    SPOTIPY_CLIENT_SECRET = current_app.config['SPOTIPY_CLIENT_SECRET']
+    SPOTIPY_REDIRECT_URI = current_app.config['SPOTIPY_REDIRECT_URI']
+    
+    return SpotifyOAuth(
+        SPOTIPY_CLIENT_ID,
+        SPOTIPY_CLIENT_SECRET,
+        SPOTIPY_REDIRECT_URI,
+        scope='user-read-private user-read-email user-top-read user-library-read user-follow-read playlist-read-private',
+        show_dialog=True,
+        cache_handler=FlaskSessionHandler()  # Ensure FlaskSessionHandler is imported here
+    )
            
            
 
@@ -51,6 +69,7 @@ def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    
     if not email or not password:
         return jsonify({'error': 'Missing email or password'}), 400
 
@@ -59,23 +78,70 @@ def login():
         login_user(user)
         
         spotify_account = SpotifyAccount.query.filter_by(user_id=user.id).first()
-        if not spotify_account or not spotify_account.spotify_access_token:
-            sp_oauth = get_spotify_oauth()
-            return redirect(sp_oauth.get_authorize_url())
         
-        response = jsonify({'message': 'Login successful!', 'user': user.to_dict()})
-        return response, 200
+        if spotify_account:
+            if spotify_account.spotify_access_token:
+                sp = Spotify(auth=spotify_account.spotify_access_token)
+                try:
+                    sp.current_user()
+                except spotipy.SpotifyException as e:
+                    if e.http_status == 401:
+                        # Token is expired, refresh it
+                        sp_oauth = get_spotify_oauth()
+                        try:
+                            token_info = sp_oauth.refresh_access_token(spotify_account.spotify_refresh_token)
+                            new_access_token = token_info['access_token']
+                            
+                            # Update the database with the new access token
+                            spotify_account.spotify_access_token = new_access_token
+                            db.session.commit()
+                            
+                            # Use the new access token
+                            sp = Spotify(auth=new_access_token)
+                        except Exception as refresh_e:
+                            print(f"Failed to refresh access token: {refresh_e}")
+                            return jsonify({'error': 'Failed to refresh Spotify token'}), 500
+            else:
+                # No access token found, start the OAuth flow
+                sp_oauth = get_spotify_oauth()
+                authorize_url = sp_oauth.get_authorize_url()
+                
+                # Return the authorization URL for the client to handle
+                return jsonify({'authorize_url': authorize_url})
+        
+        # Return a success message after successful login
+        return jsonify({'message': 'Login successful'})
     else:
         return jsonify({'error': 'Invalid email or password'}), 401
+
+
 
 
 @main_bp.route('/check_login', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def check_login():
     if current_user.is_authenticated:
-        return jsonify({'logged_in': True, 'user': current_user.to_dict()})
+        # Check if Spotify account is linked and has a valid access token
+        spotify_account = SpotifyAccount.query.filter_by(user_id=current_user.id).first()
+        if spotify_account and spotify_account.spotify_access_token:
+            # Optionally, verify if the access token is still valid
+            sp = Spotify(auth=spotify_account.spotify_access_token)
+            try:
+                sp.current_user()  # Attempt to fetch current user to validate token
+                spotify_authenticated = True
+            except:
+                spotify_authenticated = False
+        else:
+            spotify_authenticated = False
+
+        return jsonify({
+            'logged_in': True,
+            'user': current_user.to_dict(),
+            'spotify_authenticated': spotify_authenticated
+        })
     else:
         return jsonify({'logged_in': False})
+
 
 @main_bp.route('/logout', methods=['POST'])
 @login_required

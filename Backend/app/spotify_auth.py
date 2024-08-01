@@ -1,8 +1,9 @@
 from flask import Blueprint, redirect, request, session, current_app, jsonify
-from spotipy.cache_handler import CacheHandler
 from flask_login import login_required, current_user
-from spotipy import Spotify, oauth2
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyOAuth, CacheHandler
 from .models import db, SpotifyAccount, SpotifySong, LikedSong, LeastPopularTrack, TopTrack, TopArtist
+import spotipy
 import logging
 import json
 
@@ -15,20 +16,18 @@ class FlaskSessionHandler(CacheHandler):
     def save_token_to_cache(self, token_info):
         session['token_info'] = token_info
 
-    
-
 def get_spotify_oauth():
     SPOTIPY_CLIENT_ID = current_app.config['SPOTIPY_CLIENT_ID']
     SPOTIPY_CLIENT_SECRET = current_app.config['SPOTIPY_CLIENT_SECRET']
     SPOTIPY_REDIRECT_URI = current_app.config['SPOTIPY_REDIRECT_URI']
     
-    return oauth2.SpotifyOAuth(
+    return SpotifyOAuth(
         SPOTIPY_CLIENT_ID,
         SPOTIPY_CLIENT_SECRET,
         SPOTIPY_REDIRECT_URI,
         scope='user-read-private user-read-email user-top-read user-library-read user-follow-read playlist-read-private',
-        show_dialog=True,
-        cache_handler=FlaskSessionHandler()
+        cache_handler=FlaskSessionHandler(),
+        show_dialog=True
     )
 
 @spotify_auth_bp.route('/spotify/login')
@@ -59,6 +58,10 @@ logger = logging.getLogger(__name__)
 def spotify_callback():
     sp_oauth = get_spotify_oauth()
     code = request.args.get('code')
+    
+    if not code:
+        return "Error: No authorization code provided", 400
+
     token_info = sp_oauth.get_access_token(code)
     
     if not token_info:
@@ -68,7 +71,12 @@ def spotify_callback():
     refresh_token = token_info.get('refresh_token')
 
     sp = Spotify(auth=access_token)
-    user_profile = sp.current_user()
+    
+    try:
+        user_profile = sp.current_user()
+    except spotipy.SpotifyException as e:
+        logger.error(f"Spotify API error: {e}")
+        return "Error: Failed to fetch user profile", 500
     
     logger.info(f"User Profile: {json.dumps(user_profile, indent=2)}")
 
@@ -223,15 +231,40 @@ def get_artist_details(artist_id):
 @spotify_auth_bp.route('/spotify-top-tracks')
 @login_required
 def spotify_top_tracks():
-    sp_oauth = get_spotify_oauth()
-    token_info = sp_oauth.get_cached_token()
-    if not token_info:
-        return jsonify({"error": "User not authenticated with Spotify"}), 401
-
-    access_token = token_info['access_token']
-    sp = Spotify(auth=access_token)
-
     try:
+        sp_oauth = get_spotify_oauth()
+        token_info = sp_oauth.get_cached_token()
+
+        if not token_info:
+            print("No cached token found.")
+            return jsonify({"error": "User not authenticated with Spotify"}), 401
+
+        access_token = token_info['access_token']
+        sp = Spotify(auth=access_token)
+
+        # Verify if the token is still valid
+        try:
+            sp.current_user()
+        except spotipy.SpotifyException as e:
+            if e.http_status == 401:
+                # Token expired or invalid, attempt to refresh
+                spotify_account = SpotifyAccount.query.filter_by(user_id=current_user.id).first()
+                if spotify_account:
+                    try:
+                        token_info = sp_oauth.refresh_access_token(spotify_account.spotify_refresh_token)
+                        new_access_token = token_info['access_token']
+                        
+                        # Update the database with the new access token
+                        spotify_account.spotify_access_token = new_access_token
+                        db.session.commit()
+                        
+                        # Retry the Spotify request with the new token
+                        sp = Spotify(auth=new_access_token)
+                    except Exception as refresh_e:
+                        print(f"Failed to refresh access token: {refresh_e}")
+                        return jsonify({'error': 'Failed to refresh Spotify token'}), 500
+
+        # Fetch and process top tracks
         top_tracks = sp.current_user_top_tracks(limit=10)
         user_id = current_user.id
 
@@ -285,8 +318,6 @@ def spotify_top_tracks():
     except Exception as e:
         print(f"Failed to fetch or update top tracks: {e}")
         return jsonify({"error": "Failed to fetch or update top tracks"}), 500
-
-
 
 
 @spotify_auth_bp.route('/spotify-top-artists')
@@ -345,23 +376,21 @@ def spotify_top_artists():
 
 
     
-@spotify_auth_bp.route('/spotify-data')
+@spotify_auth_bp.route('/spotify-data', methods=['GET'])
 @login_required
-def spotify_data():
-    sp_oauth = get_spotify_oauth()
-    token_info = sp_oauth.get_cached_token()
-    if not token_info:
-        return "Error: User not authenticated with Spotify", 401
+def get_spotify_data():
+    spotify_account = SpotifyAccount.query.filter_by(user_id=current_user.id).first()
+    if not spotify_account or not spotify_account.spotify_access_token:
+        return jsonify({'error': 'User not authenticated with Spotify'}), 401
 
-    access_token = token_info['access_token']
-    sp = Spotify(auth=access_token)
-
+    sp = Spotify(auth=spotify_account.spotify_access_token)
     try:
         user_data = sp.current_user()
         return jsonify(user_data)
     except Exception as e:
         print(f"Failed to fetch Spotify data: {e}")
-        return "Error: Failed to fetch Spotify data", 500
+        return jsonify({'error': 'Failed to fetch Spotify data'}), 500
+
 
 @spotify_auth_bp.route('/unlink-spotify', methods=['GET'])
 def unlink_spotify():

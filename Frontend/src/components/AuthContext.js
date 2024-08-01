@@ -15,6 +15,7 @@ const AuthProvider = ({ children }) => {
         const response = await axios.get("http://localhost:5000/check_login", {
           withCredentials: true,
         });
+
         if (response.data.logged_in) {
           setIsAuthenticated(true);
           setUser(response.data.user);
@@ -60,7 +61,7 @@ const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         setUser(response.data.user);
 
-        // Redirect to Spotify login if needed
+        // Check Spotify login status
         const spotifyResponse = await axios.get(
           "http://localhost:5000/spotify-login",
           {

@@ -1,5 +1,5 @@
 // src/pages/LogInPage.js
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../components/AuthContext";
 import { Link } from "react-router-dom";
 
@@ -7,12 +7,25 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [redirectTo, setRedirectTo] = useState(null); // State to hold redirect URL
   const { login } = useAuth();
 
-  const handleLogin = () => {
-    login(email, password);
-    setLoginSuccess(true);
+  const handleLogin = async () => {
+    try {
+      await login(email, password);
+      setLoginSuccess(true);
+      setRedirectTo("http://localhost:5000/spotify/login"); // Set redirect URL upon successful login
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
+
+  // Redirect when loginSuccess is true
+  useEffect(() => {
+    if (loginSuccess && redirectTo) {
+      window.location.href = redirectTo;
+    }
+  }, [loginSuccess, redirectTo]);
 
   return (
     <div>

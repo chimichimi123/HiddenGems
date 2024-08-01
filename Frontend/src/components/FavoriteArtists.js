@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  Box,
+  Image,
+  Text,
+  VStack,
+  Wrap,
+  WrapItem,
+  Button,
+  Spinner,
+} from "@chakra-ui/react";
 
 const FavoriteArtists = () => {
   const [topArtists, setTopArtists] = useState([]);
@@ -41,57 +51,77 @@ const FavoriteArtists = () => {
   };
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <Spinner size="xl" />;
   }
 
   if (error) {
-    return <p>{error}</p>;
+    return <Text color="red.500">{error}</Text>;
   }
 
   return (
-    <div>
-      <h2>Favorite Artists</h2>
+    <Box p={5}>
+      <Text fontSize="2xl" fontWeight="bold" mb={5}>
+        Favorite Artists
+      </Text>
       {selectedArtist ? (
-        <div>
-          <h2>{selectedArtist.name}</h2>
-          <p>Followers: {selectedArtist.followers}</p>
-          <p>Genres: {selectedArtist.genres}</p>
-          <p>Popularity: {selectedArtist.popularity}</p>
-          <p>
-            <img
-              src={selectedArtist.image_url || "default_image_url.jpg"}
-              alt={`${selectedArtist.name} profile`}
-              style={{ width: "200px", height: "200px" }}
-            />
-          </p>
-          <button onClick={handleBackToList}>Back to list</button>
-        </div>
+        <Box>
+          <Text fontSize="2xl" fontWeight="bold">
+            {selectedArtist.name}
+          </Text>
+          <Text>Followers: {selectedArtist.followers}</Text>
+          <Text>Genres: {selectedArtist.genres}</Text>
+          <Text>Popularity: {selectedArtist.popularity}</Text>
+          <Image
+            src={selectedArtist.image_url || "default_image_url.jpg"}
+            alt={`${selectedArtist.name} profile`}
+            boxSize="200px"
+            objectFit="cover"
+            borderRadius="md"
+            my={4}
+          />
+          <Button onClick={handleBackToList} colorScheme="teal">
+            Back to list
+          </Button>
+        </Box>
       ) : (
-        <ul>
+        <Wrap spacing="30px" justify="center">
           {topArtists.length === 0 ? (
-            <p>No artists available</p>
+            <Text>No artists available</Text>
           ) : (
             topArtists.map((artist) => (
-              <li key={artist.id} onClick={() => handleArtistClick(artist)}>
-                <div>
-                  <p>
-                    <strong>{artist.name}</strong>
-                  </p>
-                  <p>Popularity: {artist.popularity}</p>
-                  <p>
-                    <img
+              <WrapItem key={artist.id}>
+                <Box
+                  p={5}
+                  maxW="sm"
+                  borderWidth="1px"
+                  borderRadius="lg"
+                  overflow="hidden"
+                  boxShadow="md"
+                  _hover={{ boxShadow: "xl", transform: "scale(1.05)" }}
+                  transition="all 0.2s"
+                  onClick={() => handleArtistClick(artist)}
+                  cursor="pointer"
+                >
+                  <VStack spacing={4}>
+                    <Image
                       src={artist.image_url || "default_image_url.jpg"}
                       alt={`${artist.name} profile`}
-                      style={{ width: "100px", height: "100px" }}
+                      boxSize="150px"
+                      objectFit="cover"
+                      borderRadius="full"
                     />
-                  </p>
-                </div>
-              </li>
+                    <Text fontWeight="bold" fontSize="xl">
+                      {artist.name}
+                    </Text>
+                    <Text>Popularity: {artist.popularity}</Text>
+                  </VStack>
+                </Box>
+              </WrapItem>
             ))
           )}
-        </ul>
+        </Wrap>
       )}
-    </div>
+    </Box>
   );
 };
 

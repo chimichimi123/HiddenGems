@@ -1,36 +1,64 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
+import {
+  Box,
+  Image,
+  Text,
+  Button,
+  Link,
+  VStack,
+  HStack,
+  Wrap,
+  WrapItem,
+} from "@chakra-ui/react";
 
 const SongList = ({ songs = [] }) => {
   return (
-    <div>
+    <Box p={5}>
       {songs.length === 0 ? (
-        <p>No songs available</p>
+        <Text>No songs available</Text>
       ) : (
-        <ul>
+        <Wrap spacing="30px" justify="center">
           {songs.map((song) => (
-            <li key={song.id}>
-              <div>
-                <p>
-                  <strong>{song.name}</strong>
-                </p>
-                <p>Artist: {song.artist}</p>
-                <p>Album: {song.album}</p>
-                <p>Popularity: {song.popularity}</p>
-                <img
-                  src={song.image_url || "default_image_url.jpg"}
-                  alt={song.name}
-                  style={{ width: "100px", height: "100px" }}
-                />
-                <button>
-                  <Link to={`/song/${song.id}`}>View Song Details</Link>
-                </button>
-              </div>
-            </li>
+            <WrapItem key={song.id}>
+              <Box
+                p={5}
+                maxW="sm"
+                borderWidth="1px"
+                borderRadius="lg"
+                overflow="hidden"
+                boxShadow="md"
+                _hover={{ boxShadow: "xl", transform: "scale(1.05)" }}
+                transition="all 0.2s"
+              >
+                <VStack spacing={4}>
+                  <Image
+                    src={song.image_url || "default_image_url.jpg"}
+                    alt={song.name}
+                    boxSize="150px"
+                    objectFit="cover"
+                    borderRadius="full"
+                  />
+                  <Text fontWeight="bold" fontSize="xl">
+                    {song.name}
+                  </Text>
+                  <Text>Artist: {song.artist}</Text>
+                  <Text>Album: {song.album}</Text>
+                  <Text>Popularity: {song.popularity}</Text>
+                  <Button
+                    as={RouterLink}
+                    to={`/song/${song.id}`}
+                    colorScheme="teal"
+                  >
+                    View Song Details
+                  </Button>
+                </VStack>
+              </Box>
+            </WrapItem>
           ))}
-        </ul>
+        </Wrap>
       )}
-    </div>
+    </Box>
   );
 };
 

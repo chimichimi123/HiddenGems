@@ -1,12 +1,12 @@
-// src/pages/FavoriteSongsPage.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import SongList from "./SongList";
+import { Box, Text } from "@chakra-ui/react";
+import SongList from "./SongList"; // Assuming you have a SongList component
 
 const FavoriteSongsPage = () => {
   const [songs, setSongs] = useState([]);
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchSongs = async () => {
@@ -19,7 +19,7 @@ const FavoriteSongsPage = () => {
         );
 
         const songsData = response.data;
-        console.log("Fetched songs data:", songsData); // Add this line
+        console.log("Fetched songs data:", songsData);
         setSongs(songsData);
         setLoading(false);
       } catch (error) {
@@ -45,10 +45,12 @@ const FavoriteSongsPage = () => {
   }
 
   return (
-    <div>
-      <h2>These were your favorite songs recently</h2>
-      <SongList songs={songs} /> {}
-    </div>
+    <Box textAlign="center">
+      <Text fontSize="2xl" fontWeight="bold" mb={5}>
+        These were your favorite songs lately!
+      </Text>
+      <SongList songs={songs} />
+    </Box>
   );
 };
 

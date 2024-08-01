@@ -448,7 +448,8 @@ def get_recommendations():
                 'album': track['album']['name'],
                 'popularity': track['popularity'],
                 'image_url': track['album']['images'][0]['url'] if track['album']['images'] else '',
-                'embed_url': f"https://open.spotify.com/embed/track/{track['id']}"
+                'embed_url': f"https://open.spotify.com/embed/track/{track['id']}",
+                'preview_url': track['preview_url'],
             }
             recommended_tracks_list.append(track_data)
 

@@ -1,9 +1,27 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import {
+  Box,
+  Heading,
+  Image,
+  Text,
+  VStack,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  Spinner,
+  Wrap,
+  WrapItem,
+  Button,
+  useToast,
+} from "@chakra-ui/react";
 import defaultProfileImage from "../images/spotify_user_card-default.jpg";
 import UserLikedSongs from "../components/UserLikedSongs";
 import SongList from "../components/SongList";
+import ArtistDetails from "../components/ArtistDetails";
 
 function UserProfiles() {
   const { userId } = useParams();
@@ -11,8 +29,10 @@ function UserProfiles() {
   const [topTracks, setTopTracks] = useState([]);
   const [topArtists, setTopArtists] = useState([]);
   const [leastPopularTracks, setLeastPopularTracks] = useState([]);
+  const [selectedArtistId, setSelectedArtistId] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -57,47 +77,150 @@ function UserProfiles() {
   }, [userId]);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <VStack
+        spacing={4}
+        minHeight="100vh"
+        justifyContent="center"
+        bgGradient="linear(to-b, #2D3748, #000000)"
+      >
+        <Spinner size="xl" color="teal" />
+        <Text color="white">Loading...</Text>
+      </VStack>
+    );
   }
 
   if (error) {
-    return <p>{error}</p>;
+    toast({
+      title: "Error",
+      description: error,
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+    });
+    return null;
   }
 
-  return (
-    <div>
-      {user ? (
-        <div>
-          <h2>{user.username}</h2>
-          <p>{user.email}</p>
-          <p>Display Name: {user.display_name}</p>
-          <p>Bio: {user.bio}</p>
-          <img
-            src={
-              user.profile_image
-                ? `http://localhost:5000/uploads/${user.profile_image}`
-                : defaultProfileImage
-            }
-            alt="Profile"
-            style={{ width: "150px", height: "150px", borderRadius: "50%" }}
-          />
-          <UserLikedSongs userId={userId} />
-          <h3>This Users Top Tracks</h3>
-          <SongList songs={topTracks} title="Top Tracks" />
+  const handleArtistClick = (artistId) => {
+    setSelectedArtistId(artistId);
+  };
 
-          <h3>This Users Top Artists</h3>
-          <ul>
-            {topArtists.map((artist) => (
-              <li key={artist.id}>{artist.name}</li>
-            ))}
-          </ul>
-          <h3>This Users favorite obscure Tracks</h3>
-          <SongList songs={leastPopularTracks} title="Most Obscure Songs" />
-        </div>
+  const handleBackToList = () => {
+    setSelectedArtistId(null);
+  };
+
+  return (
+    <Box
+      bgGradient="linear(to-b, #2D3748, #000000)"
+      color="white"
+      minHeight="100vh"
+      p={5}
+    >
+      {user ? (
+        <VStack spacing={5} align="start">
+          <Box textAlign="center" mb={5}>
+            <Image
+              src={
+                user.profile_image
+                  ? `http://localhost:5000/uploads/${user.profile_image}`
+                  : defaultProfileImage
+              }
+              alt="Profile"
+              boxSize="150px"
+              borderRadius="full"
+              mb={4}
+              mx="auto"
+            />
+            <Heading as="h2" size="lg">
+              {user.username}
+            </Heading>
+            <Text fontSize="md" color="gray.300">
+              {user.email}
+            </Text>
+            <Text fontSize="md" color="gray.300">
+              Display Name: {user.display_name}
+            </Text>
+            <Text fontSize="md" color="gray.300">
+              Bio: {user.bio}
+            </Text>
+          </Box>
+
+          <Tabs variant="enclosed" colorScheme="teal">
+            <TabList>
+              <Tab>Liked Songs</Tab>
+              <Tab>Top Tracks</Tab>
+              <Tab>Top Artists</Tab>
+              <Tab>Most Obscure Songs</Tab>
+            </TabList>
+
+            <TabPanels>
+              <TabPanel>
+                <UserLikedSongs userId={userId} />
+              </TabPanel>
+              <TabPanel>
+                <SongList songs={topTracks} title="Top Tracks" />
+              </TabPanel>
+              <TabPanel>
+                {selectedArtistId ? (
+                  <ArtistDetails
+                    artistId={selectedArtistId}
+                    onBackClick={handleBackToList}
+                  />
+                ) : (
+                  <Wrap spacing="30px" justify="center">
+                    {topArtists.length === 0 ? (
+                      <Text>No artists available</Text>
+                    ) : (
+                      topArtists.map((artist) => (
+                        <WrapItem key={artist.id}>
+                          <Box
+                            p={5}
+                            maxW="sm"
+                            borderWidth="1px"
+                            borderRadius="lg"
+                            overflow="hidden"
+                            boxShadow="md"
+                            _hover={{
+                              boxShadow: "xl",
+                              transform: "scale(1.05)",
+                            }}
+                            transition="all 0.2s"
+                            onClick={() => handleArtistClick(artist.id)}
+                            cursor="pointer"
+                          >
+                            <VStack spacing={4}>
+                              <Image
+                                src={artist.image_url || defaultProfileImage}
+                                alt={`${artist.name} profile`}
+                                boxSize="150px"
+                                objectFit="cover"
+                                borderRadius="full"
+                              />
+                              <Text fontWeight="bold" fontSize="xl">
+                                {artist.name}
+                              </Text>
+                              <Text>Popularity: {artist.popularity}</Text>
+                            </VStack>
+                          </Box>
+                        </WrapItem>
+                      ))
+                    )}
+                  </Wrap>
+                )}
+              </TabPanel>
+              <TabPanel>
+                <SongList
+                  songs={leastPopularTracks}
+                  title="Most Obscure Songs"
+                />
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
+        </VStack>
       ) : (
-        <p>No user data available.</p>
+        <Text>No user data available.</Text>
       )}
-    </div>
+    </Box>
   );
 }
 

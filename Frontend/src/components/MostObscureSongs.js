@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Box, Text } from "@chakra-ui/react";
 import SongList from "./SongList";
 
 function MostObscureSongs() {
@@ -40,10 +41,12 @@ function MostObscureSongs() {
   }
 
   return (
-    <div>
-      <h3>Out of all of your top songs lately these were the most obscure</h3>
+    <Box textAlign="center">
+      <Text fontSize="2xl" fontWeight="bold" mb={5}>
+        These are the most obscure songs you've been loving lately!
+      </Text>
       <SongList songs={songs} />
-    </div>
+    </Box>
   );
 }
 

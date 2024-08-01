@@ -13,29 +13,32 @@ import UserProfiles from "./pages/UserProfiles";
 import UserSearch from "./pages/UserSearch";
 import SongDetails from "./pages/SongDetails";
 import LikedSongs from "./components/LikedSongs";
+import { ChakraProvider } from "@chakra-ui/react";
 
 import { AuthProvider } from "./components/AuthContext";
 
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <Header />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/song/:id" element={<SongDetails />} />
-          <Route path="/login" element={<LogInPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/search" element={<UserSearch />} />
-          <Route path="/user/liked_songs" element={<LikedSongs />} />
-          <Route path="/edit-profile" element={<EditProfilePage />} />
-          <Route path="/discover" element={<DiscoverPage />} />
-          <Route path="/user" element={<UserProfilePage />} />
-          <Route path="/spotify/user/:userId" element={<UserProfiles />} />
-          <Route path="/logout" element={<LogOut />} />
-        </Routes>
-      </AuthProvider>
+      <ChakraProvider>
+        <AuthProvider>
+          <Header />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/song/:id" element={<SongDetails />} />
+            <Route path="/login" element={<LogInPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/search" element={<UserSearch />} />
+            <Route path="/user/liked_songs" element={<LikedSongs />} />
+            <Route path="/edit-profile" element={<EditProfilePage />} />
+            <Route path="/discover" element={<DiscoverPage />} />
+            <Route path="/user" element={<UserProfilePage />} />
+            <Route path="/spotify/user/:userId" element={<UserProfiles />} />
+            <Route path="/logout" element={<LogOut />} />
+          </Routes>
+        </AuthProvider>
+      </ChakraProvider>
     </Router>
   );
 }

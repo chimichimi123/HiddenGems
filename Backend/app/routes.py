@@ -147,6 +147,10 @@ def check_login():
 @login_required
 def logout():
     logout_user()
+    
+    session.pop('access_token', None)
+    session.pop('refresh_token', None)
+    
     session.clear()
     return jsonify({'message': 'Logout successful!'}), 200
 

@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from .BAH import db
 from datetime import datetime
+from sqlalchemy import PrimaryKeyConstraint
 
 class User(db.Model, UserMixin, SerializerMixin):
     
@@ -101,16 +102,18 @@ class Song(db.Model, SerializerMixin):
     serialize_rules = ('-user',)
     
 class TopArtist(db.Model, SerializerMixin):
-    id = db.Column(db.String, primary_key=True)
+    id = db.Column(db.String)
     name = db.Column(db.String, nullable=False)
     image_url = db.Column(db.String)
     followers = db.Column(db.Integer)
     genres = db.Column(db.String)
     popularity = db.Column(db.Integer)
-    
-
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('top_artists', lazy=True))
+    
+    __table_args__ = (
+        PrimaryKeyConstraint('id', 'user_id'),
+    )
     
     serialize_rules = ('-user',)
 

@@ -326,7 +326,7 @@ def spotify_top_artists():
     sp_oauth = get_spotify_oauth()
     token_info = sp_oauth.get_cached_token()
     if not token_info:
-        return "Error: User not authenticated with Spotify", 401
+        return jsonify({"error": "User not authenticated with Spotify"}), 401
 
     access_token = token_info['access_token']
     sp = Spotify(auth=access_token)
@@ -334,8 +334,6 @@ def spotify_top_artists():
     try:
         top_artists = sp.current_user_top_artists(limit=10)
         user_id = current_user.id
-
-        existing_artists = {artist.id for artist in TopArtist.query.filter_by(user_id=user_id).all()}
 
         for artist in top_artists['items']:
             artist_data = {
@@ -347,14 +345,19 @@ def spotify_top_artists():
                 'popularity': artist['popularity'],
                 'user_id': user_id
             }
-            if artist_data['id'] in existing_artists:
-                TopArtist.query.filter_by(id=artist_data['id'], user_id=user_id).update(artist_data)
+            existing_artist = TopArtist.query.filter_by(id=artist_data['id'], user_id=user_id).first()
+            if existing_artist:
+                existing_artist.name = artist_data['name']
+                existing_artist.image_url = artist_data['image_url']
+                existing_artist.followers = artist_data['followers']
+                existing_artist.genres = artist_data['genres']
+                existing_artist.popularity = artist_data['popularity']
             else:
                 new_artist = TopArtist(**artist_data)
                 db.session.add(new_artist)
 
         db.session.commit()
-        
+
         top_artists_for_user = TopArtist.query.filter_by(user_id=user_id).all()
         top_artists_data = [
             {
@@ -367,12 +370,13 @@ def spotify_top_artists():
             }
             for artist in top_artists_for_user
         ]
-        
+
         return jsonify(top_artists_data), 200
 
     except Exception as e:
         print(f"Failed to fetch or update top artists: {e}")
-        return "Error: Failed to fetch or update top artists", 500
+        return jsonify({"error": "Failed to fetch or update top artists"}), 500
+
 
 
     

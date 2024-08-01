@@ -28,7 +28,7 @@ const SongDetails = () => {
       await axios.post(
         "http://localhost:5000/spotify/like_song",
         {
-          song_id: song.id,
+          spotify_song_id: song.id,
           name: song.name,
           artist: song.artist,
           album: song.album,

@@ -19,19 +19,6 @@ const AuthProvider = ({ children }) => {
         if (response.data.logged_in) {
           setIsAuthenticated(true);
           setUser(response.data.user);
-
-          // Check if Spotify login is required
-          const spotifyResponse = await axios.get(
-            "http://localhost:5000/spotify-login",
-            {
-              withCredentials: true,
-            }
-          );
-
-          if (!spotifyResponse.data.success) {
-            // Redirect to Spotify login if not logged in
-            window.location.href = "http://localhost:5000/spotify/login";
-          }
         } else {
           setIsAuthenticated(false);
         }
@@ -60,18 +47,6 @@ const AuthProvider = ({ children }) => {
       if (response.status === 200) {
         setIsAuthenticated(true);
         setUser(response.data.user);
-
-        // Check Spotify login status
-        const spotifyResponse = await axios.get(
-          "http://localhost:5000/spotify-login",
-          {
-            withCredentials: true,
-          }
-        );
-
-        if (!spotifyResponse.data.success) {
-          window.location.href = "http://localhost:5000/spotify/login";
-        }
       }
     } catch (error) {
       console.error("Error logging in:", error);

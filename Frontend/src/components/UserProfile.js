@@ -15,7 +15,7 @@ import {
   Link,
 } from "@chakra-ui/react";
 import axios from "axios";
-import defaultProfileImage from "../images/spotify_user_card-default.jpg"; // Adjust path as necessary
+import defaultProfileImage from "../images/empty_pfp.jpg";
 
 const UserProfile = () => {
   const [profileImage, setProfileImage] = React.useState(defaultProfileImage);
@@ -64,31 +64,6 @@ const UserProfile = () => {
     }
   };
 
-  const handleUnlinkSpotify = async () => {
-    try {
-      await axios.get("http://localhost:5000/unlink-spotify", {
-        withCredentials: true,
-      });
-      setProfileImage(defaultProfileImage);
-      toast({
-        title: "Spotify Account Unlinked",
-        description: "Your Spotify account has been unlinked successfully.",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: "Unlink Failed",
-        description:
-          "There was an error unlinking your Spotify account. Please try again.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-
   return (
     <Box position="relative">
       <Avatar
@@ -118,22 +93,11 @@ const UserProfile = () => {
               <Link href="/user" onClick={onClose}>
                 Profile
               </Link>
-              <Link href="/user/liked_songs" onClick={onClose}>
-                Liked Songs
-              </Link>
+
               <Link href="/edit-profile" onClick={onClose}>
                 Edit Profile
               </Link>
-              <Link href="http://localhost:5000/spotify/login" isExternal>
-                Login to Spotify
-              </Link>
-              <Button
-                onClick={handleUnlinkSpotify}
-                colorScheme="red"
-                variant="outline"
-              >
-                Unlink Spotify
-              </Button>
+
               <Button onClick={handleLogout} colorScheme="teal">
                 Logout
               </Button>

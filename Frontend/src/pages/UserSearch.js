@@ -13,21 +13,52 @@ import {
   Image,
   useToast,
   VStack,
+  Radio,
+  RadioGroup,
+  Stack,
+  Select,
 } from "@chakra-ui/react";
-import defaultProfileImage from "../images/spotify_user_card-default.jpg";
+import defaultProfileImage from "../images/empty_pfp.jpg"; // Update the default image path
 
 function UserSearch() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [error, setError] = useState(null);
+  const [searchType, setSearchType] = useState("name"); // Default search type is "name"
   const navigate = useNavigate();
   const toast = useToast();
+
+  const genreOptions = [
+    "Rock",
+    "Pop",
+    "Jazz",
+    "Classical",
+    "Hip-Hop",
+    "Electronic",
+    "Country",
+    "R&B",
+    "Blues",
+    "Folk",
+  ];
+  const instrumentOptions = [
+    "Guitar",
+    "Piano",
+    "Violin",
+    "Drums",
+    "Bass",
+    "Saxophone",
+    "Flute",
+    "Trumpet",
+    "Cello",
+    "Harmonica",
+  ];
 
   const handleSearch = async (event) => {
     event.preventDefault();
     try {
+      // Adjust the search URL based on the selected search type
       const response = await axios.get(
-        `http://localhost:5000/search-users?query=${query}`,
+        `http://localhost:5000/search-users?query=${query}&type=${searchType}`,
         { withCredentials: true }
       );
       setSearchResults(response.data);
@@ -46,7 +77,7 @@ function UserSearch() {
   };
 
   const handleUserClick = (userId) => {
-    navigate(`/spotify/user/${userId}`);
+    navigate(`/user/${userId}`);
   };
 
   return (
@@ -61,16 +92,63 @@ function UserSearch() {
           <FormLabel htmlFor="search" fontSize="lg" fontWeight="bold">
             Search for users:
           </FormLabel>
-          <Input
-            id="search"
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter username or email..."
-            mb={4}
-            bg="white"
-            color="black"
-          />
+
+          {/* Toggle search input based on search type */}
+          <RadioGroup onChange={setSearchType} value={searchType} mb={4}>
+            <Stack direction="row" spacing={4}>
+              <Radio value="name">Name</Radio>
+              <Radio value="instrument">Instrument</Radio>
+              <Radio value="genre">Genre</Radio>
+            </Stack>
+          </RadioGroup>
+
+          {searchType === "name" && (
+            <Input
+              id="search"
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Enter name or email..."
+              mb={4}
+              bg="white"
+              color="black"
+            />
+          )}
+
+          {searchType === "instrument" && (
+            <Select
+              placeholder="Select instrument"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              mb={4}
+              bg="white"
+              color="black"
+            >
+              {instrumentOptions.map((instrument) => (
+                <option key={instrument} value={instrument}>
+                  {instrument}
+                </option>
+              ))}
+            </Select>
+          )}
+
+          {searchType === "genre" && (
+            <Select
+              placeholder="Select genre"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              mb={4}
+              bg="white"
+              color="black"
+            >
+              {genreOptions.map((genre) => (
+                <option key={genre} value={genre}>
+                  {genre}
+                </option>
+              ))}
+            </Select>
+          )}
+
           <Button type="submit" colorScheme="teal" width="full">
             Search
           </Button>

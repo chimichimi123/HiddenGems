@@ -29,7 +29,7 @@ const Login = () => {
         email,
         password,
       });
-      navigate("/dashboard");
+      navigate("/user");
     } catch (error) {
       console.error("Error logging in:", error);
       toast({

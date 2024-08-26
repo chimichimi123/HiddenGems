@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from .config import Config
 from .BAH import db, migrate, login_manager
-from .models import User, SpotifyAccount
+from .models import User
 
 def create_app():
     app = Flask(__name__)
@@ -32,21 +32,16 @@ def create_app():
     def load_user(user_id):
         user = User.query.get(int(user_id))
         
-        if user:
-            spotify_account = SpotifyAccount.query.filter_by(user_id=user.id).first()
-            if spotify_account and spotify_account.spotify_access_token:
-                pass
+                
             
-            return user
+        return user
         return None
 
-    from .spotify_auth import spotify_auth_bp
-    app.register_blueprint(spotify_auth_bp)
+    from .friendship_routes import friendship_bp
+    app.register_blueprint(friendship_bp)
 
     from .routes import main_bp
     app.register_blueprint(main_bp)
     
-    from .User_routes import user_bp
-    app.register_blueprint(user_bp, url_prefix='/user')
 
     return app

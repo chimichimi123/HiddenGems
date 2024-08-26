@@ -20,22 +20,17 @@ function Header({ user }) {
       position="relative"
     >
       <Heading as="h1" size="lg" ml={4}>
-        Hidden Gems
+        Jamsesh
       </Heading>
       <Flex align="center" justify="center" flex="1" mx={4}>
         <Box>
-          <ChakraLink as={Link} to="/" mr={4}>
-            Home
-          </ChakraLink>
           <ChakraLink as={Link} to="/search" mr={4}>
             Search
           </ChakraLink>
-          <ChakraLink as={Link} to="/dashboard" mr={4}>
-            Dashboard
+          <ChakraLink as={Link} to="/friends" mr={4}>
+            Friends
           </ChakraLink>
-          <ChakraLink as={Link} to="/discover" mr={4}>
-            Discover
-          </ChakraLink>
+
           <ChakraLink as={Link} to="/login" mr={4}>
             Log In
           </ChakraLink>
@@ -45,7 +40,6 @@ function Header({ user }) {
         </Box>
       </Flex>
       <Box position="absolute" right="10px" top="4px">
-        {" "}
         <UserProfile user={user} />
       </Box>
     </Flex>

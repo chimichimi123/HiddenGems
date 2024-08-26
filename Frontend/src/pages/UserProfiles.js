@@ -7,31 +7,18 @@ import {
   Image,
   Text,
   VStack,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
   Spinner,
-  Wrap,
-  WrapItem,
   Button,
   useToast,
 } from "@chakra-ui/react";
-import defaultProfileImage from "../images/spotify_user_card-default.jpg";
-import UserLikedSongs from "../components/UserLikedSongs";
-import SongList from "../components/SongList";
-import ArtistDetails from "../components/ArtistDetails";
+import defaultProfileImage from "../images/empty_pfp.jpg";
 
 function UserProfiles() {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
-  const [topTracks, setTopTracks] = useState([]);
-  const [topArtists, setTopArtists] = useState([]);
-  const [leastPopularTracks, setLeastPopularTracks] = useState([]);
-  const [selectedArtistId, setSelectedArtistId] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [friendshipStatus, setFriendshipStatus] = useState(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -53,27 +40,23 @@ function UserProfiles() {
       }
     };
 
-    const fetchSpotifyProfile = async () => {
+    const fetchFriendshipStatus = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/spotify/user-profile/${userId}`,
+          `http://localhost:5000/friendship-status/${userId}`,
           {
             withCredentials: true,
           }
         );
-        const profileData = response.data;
-
-        setTopTracks(profileData.top_tracks);
-        setTopArtists(profileData.top_artists);
-        setLeastPopularTracks(profileData.least_popular_tracks);
+        setFriendshipStatus(response.data.status);
       } catch (error) {
-        console.error("Error fetching Spotify profile:", error);
-        setError("Failed to fetch Spotify profile. Please try again later.");
+        console.error("Error fetching friendship status:", error);
+        setError("Failed to fetch friendship status. Please try again later.");
       }
     };
 
     fetchUserProfile();
-    fetchSpotifyProfile();
+    fetchFriendshipStatus();
   }, [userId]);
 
   if (loading) {
@@ -101,12 +84,29 @@ function UserProfiles() {
     return null;
   }
 
-  const handleArtistClick = (artistId) => {
-    setSelectedArtistId(artistId);
-  };
-
-  const handleBackToList = () => {
-    setSelectedArtistId(null);
+  const handleFriendRequest = async () => {
+    try {
+      await axios.post(
+        "http://localhost:5000/send-friend-request",
+        { friend_id: user.id },
+        { withCredentials: true }
+      );
+      toast({
+        title: "Friend request sent",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+      setFriendshipStatus("pending");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send friend request.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   return (
@@ -143,79 +143,35 @@ function UserProfiles() {
             <Text fontSize="md" color="gray.300">
               Bio: {user.bio}
             </Text>
+            <Text fontSize="md" color="gray.300">
+              Joined: {new Date(user.created_at).toDateString()}
+            </Text>
+            <Text fontSize="md" color="gray.300">
+              Genre: {user.genre}
+            </Text>
+            <Text fontSize="md" color="gray.300">
+              Instruments: {user.instruments}
+            </Text>
           </Box>
-
-          <Tabs variant="enclosed" colorScheme="teal">
-            <TabList>
-              <Tab>Liked Songs</Tab>
-              <Tab>Top Tracks</Tab>
-              <Tab>Top Artists</Tab>
-              <Tab>Most Obscure Songs</Tab>
-            </TabList>
-
-            <TabPanels>
-              <TabPanel>
-                <UserLikedSongs userId={userId} />
-              </TabPanel>
-              <TabPanel>
-                <SongList songs={topTracks} title="Top Tracks" />
-              </TabPanel>
-              <TabPanel>
-                {selectedArtistId ? (
-                  <ArtistDetails
-                    artistId={selectedArtistId}
-                    onBackClick={handleBackToList}
-                  />
-                ) : (
-                  <Wrap spacing="30px" justify="center">
-                    {topArtists.length === 0 ? (
-                      <Text>No artists available</Text>
-                    ) : (
-                      topArtists.map((artist) => (
-                        <WrapItem key={artist.id}>
-                          <Box
-                            p={5}
-                            maxW="sm"
-                            borderWidth="1px"
-                            borderRadius="lg"
-                            overflow="hidden"
-                            boxShadow="md"
-                            _hover={{
-                              boxShadow: "xl",
-                              transform: "scale(1.05)",
-                            }}
-                            transition="all 0.2s"
-                            onClick={() => handleArtistClick(artist.id)}
-                            cursor="pointer"
-                          >
-                            <VStack spacing={4}>
-                              <Image
-                                src={artist.image_url || defaultProfileImage}
-                                alt={`${artist.name} profile`}
-                                boxSize="150px"
-                                objectFit="cover"
-                                borderRadius="full"
-                              />
-                              <Text fontWeight="bold" fontSize="xl">
-                                {artist.name}
-                              </Text>
-                              <Text>Popularity: {artist.popularity}</Text>
-                            </VStack>
-                          </Box>
-                        </WrapItem>
-                      ))
-                    )}
-                  </Wrap>
-                )}
-              </TabPanel>
-              <TabPanel>
-                <SongList
-                  songs={leastPopularTracks}
-                  title="Most Obscure Songs"
-                />
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+          <Button
+            colorScheme={
+              friendshipStatus === "accepted"
+                ? "green"
+                : friendshipStatus === "pending"
+                ? "yellow"
+                : "teal"
+            }
+            onClick={
+              friendshipStatus === "pending" ? undefined : handleFriendRequest
+            }
+            disabled={friendshipStatus === "accepted"}
+          >
+            {friendshipStatus === "accepted"
+              ? "Already Added"
+              : friendshipStatus === "pending"
+              ? "Pending Request"
+              : "Add Friend"}
+          </Button>
         </VStack>
       ) : (
         <Text>No user data available.</Text>

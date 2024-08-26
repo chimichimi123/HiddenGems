@@ -14,14 +14,12 @@ import {
   Text,
   useToast,
 } from "@chakra-ui/react";
-import defaultProfileImage from "../images/spotify_user_card-default.jpg";
+import defaultProfileImage from "../images/empty_pfp.jpg";
 
 const UserProfilePage = () => {
   const [user, setUser] = useState(null);
-  const [spotifyUserData, setSpotifyUserData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [unlinking, setUnlinking] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -40,51 +38,8 @@ const UserProfilePage = () => {
       }
     };
 
-    const fetchSpotifyUserData = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/spotify-data", {
-          withCredentials: true,
-        });
-        setSpotifyUserData(response.data);
-      } catch (error) {
-        console.error("Error fetching Spotify user data:", error);
-        setError("Failed to fetch Spotify user data. Please try again later.");
-      }
-    };
-
     fetchUserData();
-    fetchSpotifyUserData();
   }, []);
-
-  const handleUnlinkSpotify = async () => {
-    setUnlinking(true);
-    try {
-      await axios.get("http://localhost:5000/unlink-spotify", {
-        withCredentials: true,
-      });
-      setSpotifyUserData(null);
-      setUnlinking(false);
-      navigate("/user");
-      toast({
-        title: "Spotify Account Unlinked",
-        description: "Your Spotify account has been successfully unlinked.",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (error) {
-      console.error("Error unlinking Spotify account:", error);
-      setError("Failed to unlink Spotify account. Please try again later.");
-      setUnlinking(false);
-      toast({
-        title: "Unlink Failed",
-        description: "An error occurred while unlinking your Spotify account.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
 
   if (loading) {
     return (
@@ -132,6 +87,37 @@ const UserProfilePage = () => {
               <Text fontSize="md">
                 Joined: {new Date(user.created_at).toDateString()}
               </Text>
+
+              {/* Display multiple genres */}
+              <Text fontSize="md">
+                Genres:
+                {user.genres && user.genres.length > 0 ? (
+                  user.genres.map((genre, index) => (
+                    <Text as="span" key={index}>
+                      {genre}
+                      {index < user.genres.length - 1 ? ", " : ""}
+                    </Text>
+                  ))
+                ) : (
+                  <Text as="span">No genres specified</Text>
+                )}
+              </Text>
+
+              {/* Display multiple instruments */}
+              <Text fontSize="md">
+                Instruments:
+                {user.instruments && user.instruments.length > 0 ? (
+                  user.instruments.map((instrument, index) => (
+                    <Text as="span" key={index}>
+                      {instrument}
+                      {index < user.instruments.length - 1 ? ", " : ""}
+                    </Text>
+                  ))
+                ) : (
+                  <Text as="span">No instruments specified</Text>
+                )}
+              </Text>
+
               <Image
                 src={
                   user.profile_image
@@ -143,52 +129,6 @@ const UserProfilePage = () => {
                 borderRadius="full"
                 mb={4}
               />
-
-              {spotifyUserData && (
-                <>
-                  <Divider my={4} />
-                  <Heading as="h3" size="lg">
-                    Spotify Profile
-                  </Heading>
-                  <Text fontSize="md">
-                    Display Name: {spotifyUserData.display_name}
-                  </Text>
-                  <Text fontSize="md">Email: {spotifyUserData.email}</Text>
-                  <Text fontSize="md">Country: {spotifyUserData.country}</Text>
-                  <Text fontSize="md">
-                    Spotify Profile:{" "}
-                    <a
-                      href={spotifyUserData.external_urls.spotify}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: "#4CAF50" }}
-                    >
-                      {spotifyUserData.external_urls.spotify}
-                    </a>
-                  </Text>
-                  <Text fontSize="md">
-                    Followers: {spotifyUserData.followers.total}
-                  </Text>
-                  <Image
-                    src={
-                      spotifyUserData.images.length > 0
-                        ? spotifyUserData.images[0].url
-                        : defaultProfileImage
-                    }
-                    alt="Spotify Profile"
-                    boxSize="150px"
-                    borderRadius="full"
-                    mb={4}
-                  />
-                </>
-              )}
-              <Button
-                colorScheme="teal"
-                isLoading={unlinking}
-                onClick={handleUnlinkSpotify}
-              >
-                Unlink Spotify Account
-              </Button>
             </Stack>
           ) : (
             <Text>No user data available.</Text>

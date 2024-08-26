@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_login import current_user, login_required
 from .models import User, Friendship, Message
-from .BAH import db
+from .Lemon import db
 
 friendship_bp = Blueprint('friendship', __name__)
 

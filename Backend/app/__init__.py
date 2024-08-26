@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from .config import Config
-from .BAH import db, migrate, login_manager
+from .Lemon import db, migrate, login_manager
 from .models import User
 
 def create_app():

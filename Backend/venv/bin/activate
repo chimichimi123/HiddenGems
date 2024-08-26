@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/chimi/development/code/phase-5/HiddenGems/Backend/venv"
+VIRTUAL_ENV="/home/chimi/development/code/phase-5/Jamsesh/Backend/venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

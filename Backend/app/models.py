@@ -1,7 +1,7 @@
 from sqlalchemy_serializer import SerializerMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from .BAH import db
+from .Lemon import db
 from datetime import datetime
 
 # Association tables for many-to-many relationships

@@ -1,5 +1,5 @@
 from .__init__ import create_app
-from .BAH import db
+from .Lemon import db
 from .models import Genre, Instrument
 
 def populate_database():
